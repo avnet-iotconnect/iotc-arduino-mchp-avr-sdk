@@ -80,7 +80,7 @@ static bool app_needs_ota_update(const char *version) {
 
 static void on_ota(IotclEventData data) {
     const char *message = NULL;
-    char *url = iotcl_clone_downlo2ad_url(data, 0);
+    char *url = iotcl_clone_download_url(data, 0);
     bool success = false;
     if (NULL != url) {
         printf("Download URL is: %s\n", url);
