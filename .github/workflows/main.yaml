@@ -1,0 +1,20 @@
+name: Project Arduino Package
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Prepare The Arduino Library
+        run: |
+          bash -x ./scripts/setup-project.sh
+
+      - name: Publish Artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: iotc-mchp-avr-sdk.zip
+          path: ./iotc-mchp-avr-sdk.zip
