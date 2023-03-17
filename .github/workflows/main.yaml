@@ -11,7 +11,7 @@ jobs:
 
       - name: Prepare The Arduino Library
         run: |
-          bash -x ./scripts/setup-project.sh github-action-upload
+          bash -x ./scripts/setup-project.sh 
 
       - name: Publish Artifacts
         uses: actions/upload-artifact@v2
