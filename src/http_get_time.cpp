@@ -4,6 +4,7 @@
  */
 
 #include <time.h>
+#include <string.h>
 #include <Arduino.h>
 #include <log.h>
 #include <lte.h>
@@ -15,11 +16,18 @@
 time_t rtc_start = 0;
 
 static time_t parse_time_from_response(String* resp) {
-    int unix_time_index    = resp->indexOf(String("unixtime: "));
-    int utx_datetime_index = resp->indexOf(String("utc_datetime"));
+    static const char* UNIXTIME_FIELD = "unixtime: ";
+    int unix_time_index    = resp->indexOf(String(UNIXTIME_FIELD));
+    int comma_index = resp->indexOf(String(","));
 
-    return (time_t)resp->substring(unix_time_index + strlen("unixtime: "), utx_datetime_index - 1)
-        .toInt();
+
+    String time_str = resp->substring(unix_time_index + strlen(UNIXTIME_FIELD), comma_index);
+    char * endptr = NULL;
+    unsigned long ret = strtoul(time_str.c_str(), &endptr, 10);
+    if (endptr == NULL) {
+        return 0;
+    }
+    return(time_t) ret;
 }
 
 static time_t do_http_get_time(void) {
@@ -28,12 +36,9 @@ static time_t do_http_get_time(void) {
                    TIMEZONE_URL);
         return 0;
     }
-
-    HttpResponse response;
-    response = HttpClient.get(TIMEZONE_URI);
+    HttpResponse response = HttpClient.get(TIMEZONE_URI);
     if (response.status_code != HttpClient.STATUS_OK) {
-        Log.errorf("http_get_time: Error when performing a GET request on %s%s. Got status "
-                   "code = %d. Exiting...\r\n",
+        Log.errorf("http_get_time: GET request on %s%s failed. Got status code %d\r\n",
                    TIMEZONE_URL,
                    TIMEZONE_URI,
                    response.status_code);
@@ -49,11 +54,14 @@ static time_t do_http_get_time(void) {
     String body = HttpClient.readBody(512);
 
     if (body == "") {
-        Log.errorf("The returned body from the GET request is empty. Something "
-                   "went wrong. Exiting...\r\n");
+        Log.error("http_get_time:  The returned body from the GET request is empty!");
         return 0;
     }
     time_t now = parse_time_from_response(&body);
+    if (0 == now) {
+        Log.error("http_get_time: Unable to process the time response!");
+        return 0;
+    }
     Log.infof("DEBUG: %lu", now);
     rtc_start = now - (time_t)(millis()/1000);
     return now;
