@@ -14,6 +14,8 @@
 
 #define HTTP_CUSTOM_CA_SLOT   (15)
 #define MQTT_CUSTOM_CA_SLOT   (16)
+#define MQTT_PUBLIC_KEY_SLOT  (17)
+#define MQTT_PRIVATE_KEY_SLOT (17)
 
 // NOTE the special modem-compatible format for certificates
 #define CERT_GODADDY_ROOT_CA_G2 \
@@ -89,7 +91,7 @@
 "\n-----END CERTIFICATE-----"
 
 
-static bool writeCaCertificate(const char* data, const uint8_t slot) {
+static bool writeServerCaCertificate(const char* data, const uint8_t slot) {
     const size_t data_length = strlen(data);
     char command[48];
     char rbuff[4096];
@@ -115,15 +117,60 @@ static bool writeCaCertificate(const char* data, const uint8_t slot) {
     return true;
 }
 
+static bool writeCiphersuiteConfig() {
+  // This section definiton matches the list in provision.ino sample provided by the AVR-IoT-Cellular Library
+  // Ultimately, the command should be AT+SQNSPCFG=1,2,"0xC027",1,1,17,17,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
+  const char* CIPHER49 = "0xC027"; // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+  const unsigned int TLS_v1_2 = 2;
+  const char* psk = "";
+  const char* psk_identity = "";
+  const unsigned int ca_index = 1;
+
+  // Roughly overestimating the string size... Because of a few %u's and empty %s's
+  // with CIPHER49 being 6 characters and extra null, it should fit
+  const size_t command_size = strlen(AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC);
+  char command[command_size] = "";
+
+  snprintf(command,
+    command_size,
+    AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC,
+    TLS_v1_2,
+    CIPHER49,
+    1,
+    ca_index,
+    MQTT_PUBLIC_KEY_SLOT,
+    MQTT_PRIVATE_KEY_SLOT,
+    psk,
+    psk_identity
+  );
+  // Just in case someone made a mistake on size. Let's not walk over unowned memory.
+  command[command_size] = '\0';
+  SequansController.writeBytes((uint8_t*)command,
+    strlen(command),
+    true
+  );
+
+  Log.info(command);
+
+  // Wait for URC confirming the security profile
+  if (!SequansController.waitForURC("SQNSPCFG", NULL, 0, 4000)) {
+    Log.error("writeCiphersuiteConfig: Unable to communcate withth the modem!");
+    return false;
+  }
+  Log.info("Ciphersuites config written successfully.");
+  return true;
+}
+
 static bool writCaCertificates() {
   SequansController.begin();
 
-  if (!writeCaCertificate(CERT_GODADDY_ROOT_CA_G2, HTTP_CUSTOM_CA_SLOT)) {
+  if (!writeServerCaCertificate(CERT_GODADDY_ROOT_CA_G2, HTTP_CUSTOM_CA_SLOT)) {
     Log.error("Unable to store the HTTP CA certificate!");
     return false;
   }
   Log.info("HTTPS CA certificate updated successfuly.");
-  if (!writeCaCertificate(CUSTOM_CA_ROOT, MQTT_CUSTOM_CA_SLOT)) {
+  if (!writeServerCaCertificate(CERT_BALTIMORE_ROOT_CA, MQTT_CUSTOM_CA_SLOT)) {
     Log.error("Unable to store the MQTT CA certificate!");
     return false;
   }
@@ -150,7 +197,7 @@ static bool printConfigValues() {
     }
     strcpy(duid, "avr-");
     strcat(duid, (char*)&thingName[strlen(thingName)-20]);
-    
+
     Log.rawf("Device ID is %s. Raw value %s)\r\n", duid, thingName);
 
     return true;
@@ -183,24 +230,29 @@ void setup() {
       return;
     }
 
-    static ATCAIfaceCfg cfg_atecc608b_i2c = {ATCA_I2C_IFACE,
-                                             ATECC608B,
-                                             {
-                                                 0x58,  // 7 bit address of ECC
-                                                 2,     // Bus number
-                                                 100000 // Baud rate
-                                             },
-                                             1560,
-                                             20,
-                                             NULL};
+    static ATCAIfaceCfg cfg_atecc608b_i2c = {
+      ATCA_I2C_IFACE,
+      ATECC608B,
+      {
+        0x58,  // 7 bit address of ECC
+        2,     // Bus number
+        100000 // Baud rate
+      },
+      1560,
+      20,
+      NULL
+    };
 
     if (ATCA_SUCCESS != (status = atcab_init(&cfg_atecc608b_i2c))) {
-        Log.errorf("Failed to init: %d", status);
+        Log.errorf("Failed to init ECC608: %d\r\n", status);
         return;
     } else {
         Log.info("Initialized ECC608");
     }
-
+    if(!writeCiphersuiteConfig()) {
+      // error will be printed
+      return;
+    }
     if (!printConfigValues()) {
       return;
     }
@@ -208,7 +260,7 @@ void setup() {
     // Retrieve public root key
     uint8_t public_key[ATCA_PUB_KEY_SIZE];
     if (ATCA_SUCCESS != (status = atcab_get_pubkey(0, public_key))) {
-        Log.errorf("Failed to get public key: %x", status);
+        Log.errorf("Failed to get public key: %x\r\n", status);
         return;
     }
 
@@ -220,7 +272,7 @@ void setup() {
                                                      public_key,
                                                      buffer,
                                                      &size))) {
-        Log.errorf("Failed to read device certificate: %d", status);
+        Log.errorf("Failed to read device certificate: %d\r\n", status);
         return;
     } else {
         Log.info("Device certificate:");
@@ -233,12 +285,15 @@ void setup() {
                                                      public_key,
                                                      buffer,
                                                      &size))) {
-        Log.errorf("Failed to read signing certificate: %d", status);
+        Log.errorf("Failed to read signing certificate: %d\r\n", status);
         return;
     } else {
         Log.info("Signing Certificate:");
         printCertificate(buffer, size);
     }
+    Log.info("========= Provisioning Complete =========");
 }
 
-void loop() {}
+void loop() {
+  delay(10000);
+}
