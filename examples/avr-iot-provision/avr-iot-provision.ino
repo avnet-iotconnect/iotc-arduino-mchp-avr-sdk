@@ -14,8 +14,8 @@
 
 #define HTTP_CUSTOM_CA_SLOT   (15)
 #define MQTT_CUSTOM_CA_SLOT   (16)
-#define MQTT_PUBLIC_KEY_SLOT  (17)
-#define MQTT_PRIVATE_KEY_SLOT (17)
+#define MQTT_PUBLIC_KEY_SLOT  (18)
+#define MQTT_PRIVATE_KEY_SLOT (0)
 
 // NOTE the special modem-compatible format for certificates
 #define CERT_GODADDY_ROOT_CA_G2 \
@@ -125,7 +125,7 @@ static bool writeCiphersuiteConfig() {
   const unsigned int TLS_v1_2 = 2;
   const char* psk = "";
   const char* psk_identity = "";
-  const unsigned int ca_index = 1;
+  const unsigned int ca_index = MQTT_CUSTOM_CA_SLOT;
 
   // Roughly overestimating the string size... Because of a few %u's and empty %s's
   // with CIPHER49 being 6 characters and extra null, it should fit
