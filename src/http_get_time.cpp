@@ -62,7 +62,6 @@ static time_t do_http_get_time(void) {
         Log.error("http_get_time: Unable to process the time response!");
         return 0;
     }
-    Log.infof("DEBUG: %lu", now);
     rtc_start = now - (time_t)(millis()/1000);
     return now;
 }
