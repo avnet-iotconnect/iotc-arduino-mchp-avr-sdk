@@ -92,10 +92,10 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
         MQTT_SECURE_PORT,
         true,
         60,
-        false,
+        true,
         sr->broker.user_name,
         "")) {
-            Log.errorf("Failed to connect to MQTT using host:%s, client id:%s, username: %s",
+            Log.errorf("Failed to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
                 sr->broker.host,
                 sr->broker.client_id,
                 sr->broker.user_name
@@ -103,7 +103,19 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
             return false;
     }
     Log.infof("Connecting to %s ", sr->broker.host);
+    int tires_num_500ms = 120; // 60 seconds
     while (!MqttClient.isConnected()) {
+        tires_num_500ms--;
+        if (tires_num_500ms < 0) {
+            Log.raw(""); // start in a new line
+            Log.errorf("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
+                sr->broker.host,
+                sr->broker.client_id,
+                sr->broker.user_name
+            );
+            MqttClient.end();
+            return false;
+        }
         Log.rawf(".");
         delay(500);
     }
