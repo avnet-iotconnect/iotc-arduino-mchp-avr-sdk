@@ -75,21 +75,28 @@ static bool generate_sync_response(void) {
     static const char* USERNAME_FORMAT = "%s/%s/?api-version=2018-06-30";
     static const char* PUB_TOPIC_FORMAT = "devices/%s/messages/events/";
     static const char* SUB_TOPIC_FORMAT = "devices/%s/messages/devicebound/#";
+
     if (sr.cpid) {
         Log.info("Sync response already generated.");
     }
+
     sr.broker.client_id = (char *) malloc(strlen(CLIENT_ID_FORMAT) + strlen(config.cpid) + strlen(config.duid));
+    sprintf(sr.broker.client_id, CLIENT_ID_FORMAT, config.cpid, config.duid);
+
     sr.broker.user_name = (char *) malloc(strlen(USERNAME_FORMAT) + strlen(config.host) + strlen(sr.broker.client_id));
+    sprintf(sr.broker.user_name, USERNAME_FORMAT, config.host, sr.broker.client_id);
+
     sr.broker.pub_topic = (char *) malloc(strlen(PUB_TOPIC_FORMAT) + strlen(sr.broker.client_id));
+    sprintf(sr.broker.pub_topic, PUB_TOPIC_FORMAT, sr.broker.client_id);
+
     sr.broker.sub_topic = (char *) malloc(strlen(SUB_TOPIC_FORMAT) + strlen(sr.broker.client_id));
+    sprintf(sr.broker.sub_topic, SUB_TOPIC_FORMAT, sr.broker.client_id);
+
     if (!sr.broker.client_id || !sr.broker.user_name || ! sr.broker.pub_topic || !sr.broker.sub_topic) {
         Log.error("generate_sync_response: Allocation error.");
         return false;
     }
-    sprintf(sr.broker.client_id, CLIENT_ID_FORMAT, config.cpid, config.duid);
-    sprintf(sr.broker.user_name, USERNAME_FORMAT, config.host, sr.broker.client_id);
-    sprintf(sr.broker.pub_topic, PUB_TOPIC_FORMAT, sr.broker.client_id);
-    sprintf(sr.broker.sub_topic, SUB_TOPIC_FORMAT, sr.broker.client_id);
+
     sr.ds = IOTCL_SR_OK;
     sr.cpid = config.cpid;
     sr.dtg = config.dtg;

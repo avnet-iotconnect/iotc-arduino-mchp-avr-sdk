@@ -18,6 +18,7 @@
 static IotConnectC2dCallback c2d_msg_cb = NULL; // callback for inbound messages
 static IotConnectStatusCallback status_cb = NULL; // callback for connection
 static IotclSyncResponse* sr;
+static bool disconnect_received = false;
 
 void iotc_mqtt_client_disconnect(void) {
     Log.info("Closing the MQTT connection");
@@ -63,12 +64,14 @@ static void on_mqtt_connected(void) {
     }
 }
 static void on_mqtt_disconnected(void) {
+    disconnect_received = true;
     if (status_cb) {
         status_cb(IOTC_CS_MQTT_DISCONNECTED);
     }
 }
 
 bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
+    disconnect_received = false;
     sr = c->sr;
 
     if (!c || !sr) {
@@ -102,6 +105,9 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
             );
             return false;
     }
+
+    MqttClient.onConnectionStatusChange(on_mqtt_connected, on_mqtt_disconnected);
+
     Log.infof("Connecting to %s ", sr->broker.host);
     int tires_num_500ms = 120; // 60 seconds
     while (!MqttClient.isConnected()) {
@@ -114,6 +120,14 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
                 sr->broker.user_name
             );
             MqttClient.end();
+            return false;
+        }
+        if (disconnect_received) {
+            Log.errorf("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
+                sr->broker.host,
+                sr->broker.client_id,
+                sr->broker.user_name
+            );
             return false;
         }
         Log.rawf(".");
@@ -131,8 +145,6 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
     if (status_cb) {
         status_cb(IOTC_CS_MQTT_CONNECTED);
     }
-    MqttClient.onConnectionStatusChange(on_mqtt_connected, on_mqtt_disconnected);
-
 
     return true;
 }
