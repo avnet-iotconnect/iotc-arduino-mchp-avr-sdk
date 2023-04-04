@@ -14,7 +14,7 @@
 
 #define HTTP_CUSTOM_CA_SLOT   (15)
 #define MQTT_CUSTOM_CA_SLOT   (16)
-#define MQTT_PUBLIC_KEY_SLOT  (18)
+#define MQTT_PUBLIC_KEY_SLOT  (0)
 #define MQTT_PRIVATE_KEY_SLOT (0)
 
 // NOTE the special modem-compatible format for certificates
@@ -119,16 +119,16 @@ static bool writeServerCaCertificate(const char* data, const uint8_t slot) {
 
 static bool writeCiphersuiteConfig() {
   // This section definiton matches the list in provision.ino sample provided by the AVR-IoT-Cellular Library
-  // Ultimately, the command should be AT+SQNSPCFG=1,2,,1,16,18,0,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+  // Ultimately, the command should be AT+SQNSPCFG=1,2,"0xC027",1,16,0,0,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   //const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
-  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,,%u,%u,%u,%u,\"%s\",\"%s\",1";
-  //  const char* CIPHER49 = "0xC027"; // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
+  const char* CIPHER49 = "0xC027"; // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   const unsigned int TLS_v1_2 = 2;
   const char* psk = "";
   const char* psk_identity = "";
   const unsigned int ca_index = MQTT_CUSTOM_CA_SLOT;
 
-  // Roughly overestimating the string size... Because of a few %u's and empty %s's
+  // Roughly overestimating the string size... Because of a few %u's and empty %s's 
   // with CIPHER49 being 6 characters and extra null, it should fit
   const size_t command_size = strlen(AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC);
   char command[command_size] = "";
@@ -137,7 +137,7 @@ static bool writeCiphersuiteConfig() {
     command_size,
     AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC,
     TLS_v1_2,
-    //CIPHER49,
+    CIPHER49,
     1,
     ca_index,
     MQTT_PUBLIC_KEY_SLOT,

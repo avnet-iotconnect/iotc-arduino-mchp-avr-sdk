@@ -35,7 +35,7 @@
 #define APP_VERSION "01.00.00"
 
 static bool connecteded_to_network = false;
-static char duid[128];
+static char duid[129];
 
 static void on_connection_status(IotConnectConnectionStatus status) {
     // Add your own status handling
