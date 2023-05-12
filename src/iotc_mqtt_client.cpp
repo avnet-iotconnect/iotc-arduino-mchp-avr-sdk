@@ -84,8 +84,8 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *c) {
     }
 
     // Initialize the ECC
-    uint8_t status = ECC608.begin();
-    if (status != ECC608.ERR_OK) {
+    ATCA_STATUS status = ECC608.begin();
+    if (status != ATCACERT_E_SUCCESS) {
         Log.error("Could not initialize ECC hardware");
         return false;
     }

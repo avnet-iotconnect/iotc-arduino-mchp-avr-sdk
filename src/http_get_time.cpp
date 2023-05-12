@@ -68,7 +68,6 @@ static time_t do_http_get_time(void) {
 
 //override time() system function
 time_t time(time_t *tloc) {
-    Log.info("Time called");
   return(rtc_start + (time_t)(millis()/1000));
 }
 
