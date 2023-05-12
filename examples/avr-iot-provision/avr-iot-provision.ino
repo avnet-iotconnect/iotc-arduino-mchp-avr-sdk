@@ -1,13 +1,9 @@
 #include <Arduino.h>
-#include <atca_helpers.h>
-#include <atcacert/atcacert_client.h>
-#include <cryptoauthlib.h>
+//#include <atcacert/atcacert_client.h>
+//#include <cryptoauthlib.h>
 #include <log.h>
 #include <ecc608.h>
 #include <sequans_controller.h>
-
-#include "cert_def_1_signer.h"
-#include "cert_def_3_device.h"
 
 #define AT_WRITE_CERTIFICATE "AT+SQNSNVW=\"certificate\",%u,%u"
 #define AT_ERASE_CERTIFICATE "AT+SQNSNVW=\"certificate\",%u,0"
@@ -67,30 +63,6 @@
 "R9I4LtD+gdwyah617jzV/OeBHRnDJELqYzmp" \
 "\n-----END CERTIFICATE-----"
 
-#define CUSTOM_CA_ROOT \
-"\n-----BEGIN CERTIFICATE-----\n" \
-"MIIDfTCCAmWgAwIBAgIJAKuM/BMFauavMA0GCSqGSIb3DQEBCwUAMFUxCzAJBgNV" \
-"BAYTAlhYMRUwEwYDVQQHDAxEZWZhdWx0IENpdHkxHDAaBgNVBAoME0RlZmF1bHQg" \
-"Q29tcGFueSBMdGQxETAPBgNVBAMMCEN1c3RvbUNBMB4XDTIzMDMwMTE2MDM1NVoX" \
-"DTI0MDIyOTE2MDM1NVowVTELMAkGA1UEBhMCWFgxFTATBgNVBAcMDERlZmF1bHQg" \
-"Q2l0eTEcMBoGA1UECgwTRGVmYXVsdCBDb21wYW55IEx0ZDERMA8GA1UEAwwIQ3Vz" \
-"dG9tQ0EwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDbxzRUilhXY3vJ" \
-"ciBUFMonkxtwH5fB7G35vzIN8Nt2xLn5/Y61lJuuCxN20XBAulUEkm5AIm4HN68G" \
-"SvUX9GqqlGf1VpWTiWNEU7P19ScTB+kJdPWTPyI1+vzTFidmvW2E2vK7YxdnbFqO" \
-"dVFXlb4LFPCeZjSAh5PF4G507ort3JWmBe9DdfWzkp+yOjjdLYUvB6o6To1Fb6SS" \
-"X9s0gHj7+WCEThP9mFcT7K5/3bMAhuRunHY+xAVnAvTUdkFPqQCMdMNr6YsRhGjQ" \
-"q12iZnWTu7S7OMjYZTZOryJkQ8Z3yHx4d+uueirZuk3sXyKJnihm3Gier6lSrz5Y" \
-"kgygdtVHAgMBAAGjUDBOMB0GA1UdDgQWBBQOzmRi3/2pEArZEhMPDLf4GnVxLDAf" \
-"BgNVHSMEGDAWgBQOzmRi3/2pEArZEhMPDLf4GnVxLDAMBgNVHRMEBTADAQH/MA0G" \
-"CSqGSIb3DQEBCwUAA4IBAQAbgds99kJT96neV8rSoJ0+DQLiTA3ydzPd8hK7YTOw" \
-"cYDmrE/d3MwrTtX3Cwe+tfZSHmBXNzrwoG/EWTA7IMSrq7UoYOhi0B3AodTruwUH" \
-"idqVgsGKAtqlI4IDihTvAJWK4+UjkCDeLwyoH8dfHAZ6Kj4+yo/x5O+YipY4VqQM" \
-"EkbgOdtB5s7e8UHQKUUd89CLIkbrpLzAsc05NMcmW2D5GQSZcLYG1z+wqNCEKNMK" \
-"pSXdTBCQdffYlL6rD+J0+wzgP9XuGXlWPiQ5O4GvZ5oyBKs6MW0HBSJ+PpQo/PFg" \
-"fck6aG/VEegYmcwgLHcnEjIeDwazGUYqhZr7R04vmP+u" \
-"\n-----END CERTIFICATE-----"
-
-
 static bool writeServerCaCertificate(const char* data, const uint8_t slot) {
     const size_t data_length = strlen(data);
     char command[48];
@@ -119,7 +91,7 @@ static bool writeServerCaCertificate(const char* data, const uint8_t slot) {
 
 static bool writeCiphersuiteConfig() {
   // This section definiton matches the list in provision.ino sample provided by the AVR-IoT-Cellular Library
-  // Ultimately, the command should be AT+SQNSPCFG=1,2,"0xC027",1,16,0,0,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
+  // Ultimately, the command should be AT+SQNSPCFG=1,2,"0xC027",1,16,18,0,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   //const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
   const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
   const char* CIPHER49 = "0xC027"; // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
@@ -140,7 +112,7 @@ static bool writeCiphersuiteConfig() {
     CIPHER49,
     1,
     ca_index,
-    MQTT_PUBLIC_KEY_SLOT,
+    MQTT_PUBLIC_KEY_SLOT,+
     MQTT_PRIVATE_KEY_SLOT,
     psk,
     psk_identity
@@ -152,14 +124,33 @@ static bool writeCiphersuiteConfig() {
     true
   );
 
-  Log.info(command);
-
   // Wait for URC confirming the security profile
   if (!SequansController.waitForURC("SQNSPCFG", NULL, 0, 4000)) {
     Log.error("writeCiphersuiteConfig: Unable to communcate withth the modem!");
     return false;
   }
-  Log.info("Ciphersuites config written successfully.");
+  Log.info("Ciphersuites config written successfully.");    
+  return true;
+}
+
+static bool writeHttpsScurityProfile() {
+  const char* const AT_HTTPS_SECURITY_PROFILE = "AT+SQNSPCFG=3,%u,\"\",%u,%u";
+  const unsigned int ca_index = HTTP_CUSTOM_CA_SLOT;
+  const unsigned int TLS_v1_2 = 2;
+
+  char command[strlen(AT_HTTPS_SECURITY_PROFILE) + 64] = "";
+
+  sprintf(command, AT_HTTPS_SECURITY_PROFILE, TLS_v1_2, 1, ca_index);
+
+  SequansController.writeBytes((uint8_t*)command, strlen(command), true);
+
+  // Wait for URC confirming the security profile
+  if (!SequansController.waitForURC("SQNSPCFG", NULL, 0, 4000)) {
+      Log.error("Error whilst doing the provisioning");
+      return false;
+  }
+
+  SequansController.clearReceiveBuffer();
   return true;
 }
 
@@ -180,119 +171,142 @@ static bool writCaCertificates() {
 }
 
 static bool printConfigValues() {
-    uint8_t status;
-    char duid[25]; // 20 bytes from thing name + "avr-"
-    char thingName[128] = {0};
-    uint8_t thingNameLen = sizeof(thingName);
+  ATCA_STATUS status;
+  char duid[84]; // 20 bytes from thing name + "avr-"
+  uint8_t thingName[80];
+  size_t thingNameLen = sizeof(thingName);
 
-    // Get the thingname
-    status = ECC608.getThingName((uint8_t *)thingName, &thingNameLen);
-    if (status != ECC608.ERR_OK) {
-        Log.error("Could not retrieve thing name from the ECC");
-        return false;
-    }
-    if (strlen(thingName) < 20) {
-        Log.error("The thing name does not seem to be correct!");
-        return false;
-
-    }
-    strcpy(duid, "avr-");
-    strcat(duid, (char*)&thingName[strlen(thingName)-20]);
-
-    Log.rawf("Device ID is %s. Raw value %s)\r\n", duid, thingName);
-
+  // Get the thingname
+  status = ECC608.readProvisionItem(AWS_THINGNAME, (uint8_t *)thingName, &thingNameLen);
+  if (status != ATCACERT_E_SUCCESS) {
+    Log.error("Could not retrieve thing name from the ECC");
+    return false;
+  }
+  if (thingNameLen < 20) {
+    Log.warn("The thing name exceeds 20 characters");
     return true;
+  }
+
+  thingName[thingNameLen] = 0; // make sure to null-terminate the thing name from ECC608
+  strcpy(duid, "avr-");
+
+  // need to truncate the thing name length due to IoTConnect UI restricition.
+  // Assuming that bytes to the right will give us more randomization.
+  strcat(duid, (char*)&thingName[thingNameLen-20]);
+  
+  Log.rawf("Device ID is %s.\r\n", duid, thingName);
+
+  return true;
 }
 
 static void printCertificate(uint8_t* certificate, uint16_t size) {
-    char buffer[1024];
-    size_t buffer_size = sizeof(buffer);
-    ATCA_STATUS result =
-        atcab_base64encode(certificate, size, buffer, &buffer_size);
+  char buffer[1024];
+  size_t buffer_size = sizeof(buffer);
 
-    if (result != ATCA_SUCCESS) {
-        Log.errorf("Failed to encode into base64: %x\r\n", result);
-        return;
-    }
+  ATCA_STATUS result =
+      atcab_base64encode(certificate, size, buffer, &buffer_size);
 
-    buffer[buffer_size] = 0;
-    Log.rawf(
-        "-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n",
-        buffer);
+  if (result != ATCA_SUCCESS) {
+      Log.errorf("Failed to encode into base64: %x\r\n", result);
+      return;
+  }
+
+  buffer[buffer_size] = 0;
+  Log.rawf(
+      "-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n",
+      buffer
+  );
+}
+bool loadAndPrintCertificates() {
+  uint8_t certificate_buffer[1024];
+  size_t device_certificate_size_max = 0;
+  size_t device_certificate_size = 0;
+  int atca_cert_status;
+  const size_t certificate_buffer_size = sizeof(certificate_buffer);
+
+  atca_cert_status = ECC608.getDeviceCertificateSize(
+    &device_certificate_size_max
+  );
+
+  if (atca_cert_status != ATCACERT_E_SUCCESS) {        
+    Log.errorf("Failed to get device certificate's max size, status code: "
+      "0x%x\r\n",
+      atca_cert_status
+      );
+    return false;
+  }
+
+  if (device_certificate_size_max > certificate_buffer_size) {
+    Log.errorf("ERROR: Fevice certificate is %lu bytes in size, but the buffer is only  %lu bytes.\r\n",
+      device_certificate_size_max,
+      certificate_buffer_size
+    );
+    return false;
+  }
+
+  device_certificate_size = certificate_buffer_size;
+  atca_cert_status = ECC608.getDeviceCertificate(
+      certificate_buffer,
+      &device_certificate_size
+  );
+  if (atca_cert_status != ATCACERT_E_SUCCESS) {
+
+      Log.errorf("Failed to get device certificate, status code: "
+                  "0x%X\r\n",
+                  atca_cert_status);
+      return false;
+  }
+
+  printCertificate(certificate_buffer, device_certificate_size);
+  return true;
 }
 
 
 void setup() {
-    Log.begin(115200);
+  Log.begin(115200);
 
-    int status;
+  int status;
 
-    if (!writCaCertificates()) {
+  if (!writCaCertificates()) {
+    return;
+  }
+
+  static ATCAIfaceCfg cfg_atecc608b_i2c = {
+    ATCA_I2C_IFACE,
+    ATECC608B,
+    {
+      0x58,  // 7 bit address of ECC
+      2,     // Bus number
+      100000 // Baud rate
+    },
+    1560,
+    20,
+    NULL
+  };
+
+  if (ATCA_SUCCESS != (status = atcab_init(&cfg_atecc608b_i2c))) {
+    Log.errorf("Failed to init ECC608: %d\r\n", status);
       return;
-    }
+  } else {
+    Log.info("Initialized ECC608");
+  }
 
-    static ATCAIfaceCfg cfg_atecc608b_i2c = {
-      ATCA_I2C_IFACE,
-      ATECC608B,
-      {
-        0x58,  // 7 bit address of ECC
-        2,     // Bus number
-        100000 // Baud rate
-      },
-      1560,
-      20,
-      NULL
-    };
+  // In case of error, error will be printed by the called function 
+  // in all these cases below
+  if(!writeCiphersuiteConfig()) {
+    return;
+  }
+  if (!printConfigValues()) {
+    return;
+  }
+  if (!loadAndPrintCertificates()) {
+    return;
+  }
+  if (!writeHttpsScurityProfile()) {
+    return;
+  }
 
-    if (ATCA_SUCCESS != (status = atcab_init(&cfg_atecc608b_i2c))) {
-        Log.errorf("Failed to init ECC608: %d\r\n", status);
-        return;
-    } else {
-        Log.info("Initialized ECC608");
-    }
-    if(!writeCiphersuiteConfig()) {
-      // error will be printed
-      return;
-    }
-    if (!printConfigValues()) {
-      return;
-    }
-
-    // Retrieve public root key
-    uint8_t public_key[ATCA_PUB_KEY_SIZE];
-    if (ATCA_SUCCESS != (status = atcab_get_pubkey(0, public_key))) {
-        Log.errorf("Failed to get public key: %x\r\n", status);
-        return;
-    }
-
-    uint8_t buffer[g_cert_def_1_signer.cert_template_size + 4];
-    size_t size = sizeof(buffer);
-
-    // Retrive device certificate
-    if (ATCA_SUCCESS != (status = atcacert_read_cert(&g_cert_def_3_device,
-                                                     public_key,
-                                                     buffer,
-                                                     &size))) {
-        Log.errorf("Failed to read device certificate: %d\r\n", status);
-        return;
-    } else {
-        Log.info("Device certificate:");
-        printCertificate(buffer, size);
-    }
-
-    size = sizeof(buffer);
-    // Retrive sign certificate
-    if (ATCA_SUCCESS != (status = atcacert_read_cert(&g_cert_def_1_signer,
-                                                     public_key,
-                                                     buffer,
-                                                     &size))) {
-        Log.errorf("Failed to read signing certificate: %d\r\n", status);
-        return;
-    } else {
-        Log.info("Signing Certificate:");
-        printCertificate(buffer, size);
-    }
-    Log.info("========= Provisioning Complete =========");
+  Log.info("========= Provisioning Complete =========");
 }
 
 void loop() {
