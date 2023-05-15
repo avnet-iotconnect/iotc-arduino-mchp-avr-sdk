@@ -23,9 +23,17 @@ int iotconnect_https_request(
 
     HttpResponse http_rsp;
     if (!send_str || 0 == strlen(send_str)) {
-        http_rsp = HttpClient.post(path, send_str);
-    } else {
+        Log.infof("get: %s %s", host, path);
         http_rsp = HttpClient.get(path);
+    } else {
+        Log.infof("post: %s %s >>%s<<", host, path, send_str);
+        http_rsp = HttpClient.post(
+            path,
+            send_str,
+            NULL,
+            HttpClientClass::CONTENT_TYPE_APPLICATION_JSON,
+            HTTP_DEFAULT_TIMEOUT_MS
+        );
     }
 
     if (0 == http_rsp.status_code) {

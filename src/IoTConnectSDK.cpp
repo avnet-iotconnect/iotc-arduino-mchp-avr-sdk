@@ -136,14 +136,18 @@ static IotclSyncResponse *run_http_sync(IotclDiscoveryResponse* dr, const char *
              uniqueid
     );
 
+    char * path = (char *) malloc(strlen(dr->path) + 5 /* "sync?" */ + 1/* null*/);
+    strcpy(path, dr->path);
+    strcat(path, "sync?");
     IotConnectHttpResponse response = {0};
     iotconnect_https_request(
         &response,
         dr->host,
-        dr->path,
+        path,
         post_data
     );
 
+    free(path);
     free(post_data);
 
     if (NULL == response.data) {
