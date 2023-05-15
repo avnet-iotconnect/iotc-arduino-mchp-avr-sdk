@@ -5,11 +5,11 @@
 
 #include <string.h>
 #include <Arduino.h>
-#include <log.h>
+#include "log.h"
 #include "iotconnect_lib.h"
 #include "iotconnect_telemetry.h"
 #include "iotconnect_discovery.h"
-#include "http_get_time.h"
+#include "iotc_time.h"
 #include "iotc_http_request.h"
 #include "iotc_mqtt_client.h"
 #include "IoTConnectSDK.h"
@@ -249,7 +249,8 @@ bool iotconnect_sdk_init(void) {
     lib_config.device.cpid = config.cpid;
     lib_config.device.duid = config.duid;
 
-    Log.infof("Time now: %lu\r\n", http_get_time());
+    // Log.infof("Time now: %lu\r\n", http_get_time());
+    iotc_get_time_modem();
 
     if (!config.env || !config.cpid || !config.duid || !config.dtg || !config.host) {
         Log.error("Error: Device configuration is invalid. Configuration values for env, cpid and duid are required.");

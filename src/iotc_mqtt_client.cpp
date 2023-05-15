@@ -7,10 +7,10 @@
 #include <stddef.h>
 #include <string.h>
 #include <Arduino.h>
-#include <log.h>
-#include <lte.h>
-#include <ecc608.h>
-#include <mqtt_client.h>
+#include "log.h"
+#include "lte.h"
+#include "ecc608.h"
+#include "mqtt_client.h"
 #include "iotc_mqtt_client.h"
 
 #define MQTT_SECURE_PORT 8883

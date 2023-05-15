@@ -5,8 +5,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <http_client.h>
-#include <log.h>
+#include "http_client.h"
+#include "log.h"
 #include "iotc_http_request.h"
 
 int iotconnect_https_request(
@@ -23,10 +23,10 @@ int iotconnect_https_request(
 
     HttpResponse http_rsp;
     if (!send_str || 0 == strlen(send_str)) {
-        Log.infof("get: %s %s", host, path);
+        Log.debugf("get: %s %s\r\n", host, path);
         http_rsp = HttpClient.get(path);
     } else {
-        Log.infof("post: %s %s >>%s<<", host, path, send_str);
+        Log.debugf("post: %s %s >>%s<<\r\n", host, path, send_str);
         http_rsp = HttpClient.post(
             path,
             send_str,
