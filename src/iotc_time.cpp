@@ -144,7 +144,7 @@ time_t iotc_get_time_modem(void) {
             Log.error("Failed to retrieve time from the modem");
             return 0;
     }
-    Log.debuf(">>%s<<\r\n", response_buffer);
+    Log.debugf("Time AT response: >>%s<<\r\n", response_buffer);
 
     time_t now = cclk_response_to_time_t(response_buffer);
     if (0 == now) {

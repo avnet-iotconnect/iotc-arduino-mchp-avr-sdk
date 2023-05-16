@@ -252,7 +252,7 @@ bool iotconnect_sdk_init(void) {
     // Log.infof("Time now: %lu\r\n", http_get_time());
     iotc_get_time_modem();
 
-    if (!config.env || !config.cpid || !config.duid || !config.dtg || !config.host) {
+    if (!config.env || !config.cpid || !config.duid) {
         Log.error("Error: Device configuration is invalid. Configuration values for env, cpid and duid are required.");
         return false;
     }

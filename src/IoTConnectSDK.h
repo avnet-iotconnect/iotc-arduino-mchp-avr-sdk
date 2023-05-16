@@ -27,8 +27,6 @@ typedef struct {
     char *env;    // Settings -> Key Vault -> CPID.
     char *cpid;   // Settings -> Key Vault -> Evnironment.
     char *duid;   // Name of the device.
-    char *dtg;    // DTG of the template.
-    char *host;   // IotHub hostname.
     IotclOtaCallback ota_cb; // callback for OTA events.
     IotclCommandCallback cmd_cb; // callback for command events.
     IotclMessageCallback msg_cb; // callback for ALL messages, including the specific ones like cmd or ota callback.
