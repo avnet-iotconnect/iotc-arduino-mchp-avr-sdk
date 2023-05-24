@@ -1,6 +1,27 @@
+/*
+  (c) 2022 Microchip Technology Inc. and its subsidiaries.
+
+  Subject to your compliance with these terms, you may use Microchip software
+  and any derivatives exclusively with Microchip products. You're responsible
+  for complying with 3rd party license terms applicable to your use of 3rd
+  party software (including open source software) that may accompany Microchip
+  software.
+
+  SOFTWARE IS "AS IS." NO WARRANTIES, WHETHER EXPRESS, IMPLIED OR STATUTORY,
+  APPLY TO THIS SOFTWARE, INCLUDING ANY IMPLIED WARRANTIES OF NON-INFRINGEMENT,
+  MERCHANTABILITY, OR FITNESS FOR A PARTICULAR PURPOSE.
+
+  IN NO EVENT WILL MICROCHIP BE LIABLE FOR ANY INDIRECT, SPECIAL, PUNITIVE,
+  INCIDENTAL OR CONSEQUENTIAL LOSS, DAMAGE, COST OR EXPENSE OF ANY KIND
+  WHATSOEVER RELATED TO THE SOFTWARE, HOWEVER CAUSED, EVEN IF MICROCHIP
+  HAS BEEN ADVISED OF THE POSSIBILITY OR THE DAMAGES ARE FORESEEABLE. TO
+  THE FULLEST EXTENT ALLOWED BY LAW, MICROCHIP'S TOTAL LIABILITY ON ALL
+  CLAIMS RELATED TO THE SOFTWARE WILL NOT EXCEED AMOUNT OF FEES, IF ANY,
+  YOU PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
+*/
 //
 // Copyright: Avnet, Microchip Technology Inc 2023
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 5/16/21.
+// Created by Nik Markovic <nikola.markovic@avnet.com> on 5/16/23.
 //
 
 #include "log.h"
@@ -32,9 +53,6 @@ static ATCAIfaceCfg cfg_atecc608b_i2c = {
 // Storage content may be arbitrary after the first null terminator.
 
 #define IOTC_ECC608_PROV_DATA_VERSION "v1.0" // Current IOTC_ECC608_PROV_VER. This is internal. User should not use this value.
-#define IOTC_ECC608_PROV_DUID_SIZE 66
-#define IOTC_ECC608_PROV_CPID_SIZE 66
-#define IOTC_ECC608_PROV_ENV_SIZE 20
 #define IOTC_ECC608_PROV_VER_SIZE (sizeof(IOTC_ECC608_PROV_DATA_VERSION))
 
 struct DataHeader {
@@ -50,17 +68,6 @@ typedef union DataHeaderUnion {
 // NOTE: Not indexed by type. Just an array one per type indexed by the order it is ecountered in the ECC608.
 static char data_cache[IOTC_DATA_SLOT_SIZE];
 
-
-
-static ATCA_STATUS init_ecc608(void) {
-    ATCA_STATUS atca_status;
-    if (ATCA_SUCCESS != (atca_status = atcab_init(&cfg_atecc608b_i2c))) {
-        Log.errorf("Failed to init ECC608: %d\r\n", atca_status);
-    } else {
-        Log.info("Initialized ECC608");
-    }
-    return atca_status;
-}
 
 static size_t ecchdr_get_data_size(DataHeaderUnion* h) {
     uint16_t this_header_offset = (char*) h - data_cache;
@@ -201,9 +208,8 @@ static ATCA_STATUS load_ecc608_cache(void) {
     if (!has_iotconnect_data) {
         append_iotconnect_blank_records(h);
         atca_status = iotc_ecc608_set_string_value_internal(IOTC_ECC608_PROV_VER, IOTC_ECC608_PROV_DATA_VERSION);
-
     }
-    return ATCA_INVALID_ID;
+    return ATCA_SUCCESS;
 }
 
 // for debugging purposes
@@ -232,12 +238,15 @@ void iotc_ecc608_dump_provision_data(void) {
 }
 
 ATCA_STATUS iotc_ecc608_init_provision(void) {
-    ATCA_STATUS atca_status = init_ecc608();
+    ATCA_STATUS atca_status;
+    atca_status = atcab_init(&cfg_atecc608b_i2c);
     if (atca_status != ATCA_SUCCESS) {
+        Log.error("Failed to initialize ECC608!");
         return atca_status;
     }
     atca_status = load_ecc608_cache();
     if (atca_status != ATCA_SUCCESS) {
+        Log.error("failed to load ecc608 cache!");
         return atca_status;
     }
     return ATCA_SUCCESS;

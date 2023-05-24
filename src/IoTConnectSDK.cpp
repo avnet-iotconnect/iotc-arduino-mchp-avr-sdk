@@ -233,6 +233,7 @@ void iotconnect_sdk_loop(void) {
 bool iotconnect_sdk_init(void) {
     if (!config.cpid || !config.env || !config.duid) {
         Log.error("CPID, Environment and DUID are required for iotconnect_sdk_init()");
+        return false;
     }
     if (NULL != sr) {
         iotcl_discovery_free_sync_response(sr);
