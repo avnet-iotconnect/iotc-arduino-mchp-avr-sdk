@@ -26,7 +26,7 @@ int iotconnect_https_request(
         Log.debugf("get: %s %s\r\n", host, path);
         http_rsp = HttpClient.get(path);
     } else {
-        Log.infof("post: %s %s >>%s<<\r\n", host, path, send_str);
+        Log.debugf("post: %s %s >>%s<<\r\n", host, path, send_str);
         http_rsp = HttpClient.post(
             path,
             send_str,
