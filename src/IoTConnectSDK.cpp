@@ -16,11 +16,12 @@
 
 #define HTTP_DISCOVERY_PATH_FORMAT "/api/sdk/cpid/%s/lang/M_C/ver/2.0/env/%s"
 
+// 36 is the limit, but just in case..
+#define IOTCONNECT_DTG_MAX_LEN 50
 
 static IotclConfig lib_config = {0};
 static IotConnectClientConfig config = {0};
-
-static IotclSyncResponse* sr = NULL;
+static IotConnectMqttClientConfig mqtt_config = {0};
 
 static void dump_response(const char *message, IotConnectHttpResponse *response) {
     Log.infof("%s", message);
@@ -235,22 +236,21 @@ bool iotconnect_sdk_init(void) {
         Log.error("CPID, Environment and DUID are required for iotconnect_sdk_init()");
         return false;
     }
-    if (NULL != sr) {
-        iotcl_discovery_free_sync_response(sr);
-        sr = NULL;
+    if (mqtt_config.sr) {
+        iotcl_discovery_free_sync_response(mqtt_config.sr);
+        mqtt_config.sr = NULL;
     }
     IotclDiscoveryResponse *discovery_response = run_http_discovery(config.cpid, config.env);
-    sr = run_http_sync(discovery_response, config.cpid, config.duid);
+    IotclSyncResponse *sr = run_http_sync(discovery_response, config.cpid, config.duid);
     if (NULL == sr) {
         // Sync_call will print the error
         return false;
     }
-
+    mqtt_config.sr = sr;
     lib_config.device.env = config.env;
     lib_config.device.cpid = config.cpid;
     lib_config.device.duid = config.duid;
 
-    // Log.infof("Time now: %lu\r\n", http_get_time());
     iotc_get_time_modem();
 
     if (!config.env || !config.cpid || !config.duid) {
@@ -275,11 +275,8 @@ bool iotconnect_sdk_init(void) {
         return false;
     }
 
-    IotConnectMqttClientConfig mqtt_config;
-    mqtt_config.sr = sr;
     mqtt_config.status_cb = config.status_cb;
     mqtt_config.c2d_msg_cb = on_mqtt_c2d_message;
-
     if (!iotc_mqtt_client_init(&mqtt_config)) {
         Log.error("Failed to connect!");
         return false;
