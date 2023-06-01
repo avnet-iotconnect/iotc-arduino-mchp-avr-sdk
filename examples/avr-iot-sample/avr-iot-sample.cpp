@@ -4,6 +4,7 @@
 //
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <Arduino.h>
 #include "log.h"
@@ -16,11 +17,40 @@
 
 #define SerialModule Serial3
 
+static const unsigned long initial_stack_address = SP;
+
+unsigned long get_free_ram () {
+    char *const heap_var = (char*) malloc(sizeof(char));
+    const unsigned long heap_address = (unsigned long) heap_var;
+    free(heap_var);
+
+    return SP - heap_address;
+}
+
+unsigned long get_heap_address () {
+    char *const heap_var = (char*) malloc(sizeof(char));
+    const unsigned long heap_address = (unsigned long) heap_var;
+    free(heap_var);
+    return heap_address;
+}
+
+void get_heap_state (char *buffer, size_t size) {
+    const unsigned long heap_address = get_heap_address();
+    const unsigned long heap_size = RAMEND - heap_address;
+    const long stack_size = initial_stack_address - SP;
+    const unsigned long free_ram = get_free_ram();
+    const unsigned long sp = SP;
+    const unsigned long ramend = RAMEND;
+    snprintf(buffer, size, "Heap Usage: %lu / %lu Stack Size: %lu Free RAM: %lu [Stack %lx:%lx Heap %lx:%lx]",
+            heap_size, heap_size + free_ram, stack_size, free_ram, initial_stack_address, sp, ramend, heap_address);
+}
+
 #define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
+#define GENERATED_ID_PREFIX "avr-"
+#define DUID_WEB_UI_MAX_LEN 31
 
 static char aws_id_buff[AWS_ID_BUFF_SIZE];
 static bool connecteded_to_network = false;
-static char duid[129];
 
 static void on_connection_status(IotConnectConnectionStatus status) {
     // Add your own status handling
@@ -116,7 +146,7 @@ static void publish_telemetry() {
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
     iotcl_telemetry_add_with_iso_time(msg, iotcl_iso_timestamp_now());
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
-    iotcl_telemetry_set_number(msg, "cpu", 3.123); // test floating point numbers
+    iotcl_telemetry_set_number(msg, "random", rand() % 100);
 
     const char *str = iotcl_create_serialized_string(msg, false);
     iotcl_telemetry_destroy(msg);
@@ -140,15 +170,6 @@ static bool connect_lte() {
     }
 }
 
-static void print_string_or_default(const char* item, const char* value, const char* default_value) {
-  if (!value) {
-    SerialModule.printf("%s: [%s]\r\n", item, default_value);
-  } else {
-    SerialModule.printf("%s: %s\r\n", item, value);
-  }
-}
-
-
 static bool load_provisioned_data(IotConnectClientConfig *config) {
   if (ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_CPID, &(config->cpid))) {
     return false; // caller will print the error
@@ -161,13 +182,34 @@ static bool load_provisioned_data(IotConnectClientConfig *config) {
   }
   return true;
 }
-
+#define MEMORY_TEST
+#ifdef MEMORY_TEST
+#define TEST_BLOCK_SIZE  1 * 128
+#define TEST_BLOCK_COUNT 30
+void memory_test() {
+    void *blocks[TEST_BLOCK_COUNT];
+    int i = 0;
+    for (; i < TEST_BLOCK_COUNT; i++) {
+        void *ptr = malloc(TEST_BLOCK_SIZE);
+        Log.infof("0x%x\r\n", (unsigned long) ptr);
+        if (!ptr) {
+            break;
+        }
+        blocks[i] = ptr;
+    }
+    Log.infof("====Allocated %d blocks of size %d (of max %d)===\r\n", i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
+    for (int j = 0; j < i; j++) {
+        free(blocks[j]);
+    }
+}
+#endif /* MEMORY_TEST */
 
 void demo_setup(void)
 {
-  Log.begin(115200);
   Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);  
   delay(200);
+
+  memory_test();
 
   if (ATCA_SUCCESS != iotc_ecc608_init_provision()) {
     return; // caller will print the error
@@ -175,23 +217,35 @@ void demo_setup(void)
 
   IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
   if (!load_provisioned_data(config) 
-    || !config->cpid || 0 == strlen(config->cpid) 
-    ||  !config->env || 0 == strlen(config->env)
+    || !config->cpid || 0 == strlen(config->cpid)
+    || !config->env || 0 == strlen(config->env)
   ) {
       Log.error("Invalid provisioning data. Please run the avr-iot-provision sketch.");
       return;
   }
 
   if (!config->duid || 0 == strlen(config->duid)) {
-    if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, aws_id_buff, AWS_ID_BUFF_SIZE)) {
+    strcpy(aws_id_buff, GENERATED_ID_PREFIX);
+    char* bufer_location = &aws_id_buff[strlen(GENERATED_ID_PREFIX)];
+    size_t buffer_size = AWS_ID_BUFF_SIZE - strlen(GENERATED_ID_PREFIX);
+    if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, bufer_location, buffer_size)) {
       return; // caller will print the error
-    }
+    } 
+    // terminate for max length
+    aws_id_buff[DUID_WEB_UI_MAX_LEN] = 0;
+
     config->duid = aws_id_buff;
   }
 
-  Log.infof("CPID:%s\r\n", config->cpid);
-  Log.infof("Env :%s\r\n", config->env);
-  Log.infof("CPID:%s\r\n", config->duid);
+  { // scope block
+  char dbgbuff[200];
+  get_heap_state(dbgbuff,200);
+  Log.info(dbgbuff);
+  }
+
+  Log.infof("CPID: %s\r\n", config->cpid);
+  Log.infof("Env : %s\r\n", config->env);
+  Log.infof("DUID: %s\r\n", config->duid);
 
   if (!connect_lte()) {
       return;
@@ -201,27 +255,6 @@ void demo_setup(void)
   config->ota_cb = on_ota;
   config->status_cb = on_connection_status;
   config->cmd_cb = on_command;
-
-  if (!config->duid || 0 == strlen(config->duid)) {
-    // -- Get the thingname and use it to construct the DUID
-    uint8_t thingName[128];
-    size_t thingNameLen = sizeof(thingName);
-    ECC608.begin();
-    ATCA_STATUS err = ECC608.readProvisionItem(AWS_THINGNAME, (uint8_t *)thingName, &thingNameLen);
-    if (err != ATCACERT_E_SUCCESS) {
-        Log.error("Could not retrieve thing name from the ECC");
-        return;
-    }
-    if (strlen((char *)thingName) < 20) {
-        Log.error("The thing name does not seem to be correct!");
-        return;
-    }
-    strcpy(duid, "avr-");
-    // append the last 20 digits of thing name to "avr-"
-    strcat(duid, (char*)&thingName[thingNameLen-20]);
-    config->duid = duid;
-    Log.infof("Obtained Device ID from the secure element: %s\r\n", duid);
-  }
 
   if (iotconnect_sdk_init()) {
     Lte.onDisconnect(on_lte_disconnect);

@@ -15,6 +15,8 @@
 
 #define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
 static char aws_id_buff[AWS_ID_BUFF_SIZE];
+#define GENERATED_ID_PREFIX "avr-"
+#define DUID_WEB_UI_MAX_LEN 31
 
 static bool load_provisioned_data(IotConnectClientConfig *config) {
   if (ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_CPID, &(config->cpid))) {
@@ -158,7 +160,7 @@ static bool provision_from_user_input(IotConnectClientConfig *config) {
 
 void setup() {
   Log.begin(115200);
-  Log.info("Tarting the provisioning sample...");
+  Log.info("Starting the provisioning sample...");
 
   iotc_prov_init();
   
@@ -172,10 +174,15 @@ void setup() {
   }
 
   iotc_prov_print_device_certificate();
-  if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, aws_id_buff, AWS_ID_BUFF_SIZE)) {
-    SerialModule.printf("AWS ID: %s\r\n", aws_id_buff);
+
+  strcpy(aws_id_buff, GENERATED_ID_PREFIX);
+  char* bufer_location = &aws_id_buff[strlen(GENERATED_ID_PREFIX)];
+  size_t buffer_size = AWS_ID_BUFF_SIZE - strlen(GENERATED_ID_PREFIX);    
+  if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, bufer_location, buffer_size)) {
     return; // caller will print the error
   }
+  // terminate for max length
+  aws_id_buff[DUID_WEB_UI_MAX_LEN] = 0;
 
   IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
   if (!load_provisioned_data(config)) {
