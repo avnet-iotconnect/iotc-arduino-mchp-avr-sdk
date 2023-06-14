@@ -16,9 +16,6 @@
 
 #define HTTP_DISCOVERY_PATH_FORMAT "/api/sdk/cpid/%s/lang/M_C/ver/2.0/env/%s"
 
-// 36 is the limit, but just in case..
-#define IOTCONNECT_DTG_MAX_LEN 50
-
 static IotclConfig lib_config = {0};
 static IotConnectClientConfig config = {0};
 static IotConnectMqttClientConfig mqtt_config = {0};
@@ -242,6 +239,7 @@ bool iotconnect_sdk_init(void) {
     }
     IotclDiscoveryResponse *discovery_response = run_http_discovery(config.cpid, config.env);
     IotclSyncResponse *sr = run_http_sync(discovery_response, config.cpid, config.duid);
+    iotcl_discovery_free_discovery_response(discovery_response); // we no longer need it
     if (NULL == sr) {
         // Sync_call will print the error
         return false;
