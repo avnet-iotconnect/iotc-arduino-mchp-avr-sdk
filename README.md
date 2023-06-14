@@ -15,6 +15,14 @@ The code in this repo has only been tested with Arduino IDE 2.0.4.
 clone this repo into your Arduino sketch directory under the libraries directory.
 For example, once you clone this SDK, the contents of this repo will be 
 under *%USER%\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
+* **IMPORTANT:** After downloading AVR-IoT-Cellular library, ensure to enable the following features:
+
+```c
+#define ATCAB_UPDATEEXTRA_EN              FEATURE_ENABLED
+// ...
+#define ATCAB_WRITE_EN                    FEATURE_ENABLED
+```
+
 * Open the Arduino IDE and load the avr-iot-provision example by navigating
 to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
 * Run the sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
