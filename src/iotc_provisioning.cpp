@@ -120,7 +120,7 @@ static bool write_ciphersuite_config(void) {
   // This section definiton matches the list in provision.ino sample provided by the AVR-IoT-Cellular Library
   // Ultimately, the command should be AT+SQNSPCFG=1,2,"0xC027",1,16,18,0,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   //const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
-  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
+  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=2,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
   const char* CIPHER49 = "0xC027"; // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   const unsigned int TLS_v1_2 = 2;
   const char* psk = "";
