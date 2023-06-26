@@ -55,14 +55,14 @@ static ATCAIfaceCfg cfg_atecc608b_i2c = {
 #define IOTC_ECC608_PROV_DATA_VERSION "v1.0" // Current IOTC_ECC608_PROV_VER. This is internal. User should not use this value.
 #define IOTC_ECC608_PROV_VER_SIZE (sizeof(IOTC_ECC608_PROV_DATA_VERSION))
 
-struct DataHeader {
+typedef struct DataHeader {
     uint16_t next : 9; // Offset of next header, up to 512 bytes (slot 8 is 416)
     uint16_t type : 7; // Type of current item, see provision_data.h
-};
+} DataHeader;
 
 typedef union DataHeaderUnion {
-    struct DataHeader header;
-    uint8_t bytes[sizeof(struct DataHeader)];
+    DataHeader header;
+    uint8_t bytes[sizeof(DataHeader)];
 } DataHeaderUnion;
 
 // NOTE: Not indexed by type. Just an array one per type indexed by the order it is ecountered in the ECC608.
@@ -239,6 +239,8 @@ void iotc_ecc608_dump_provision_data(void) {
 
 ATCA_STATUS iotc_ecc608_init_provision(void) {
     ATCA_STATUS atca_status;
+
+    // TODO: for some reason ECC608.begin() fails, which is better, sems to fail here
     atca_status = atcab_init(&cfg_atecc608b_i2c);
     if (atca_status != ATCA_SUCCESS) {
         Log.error("Failed to initialize ECC608!");
