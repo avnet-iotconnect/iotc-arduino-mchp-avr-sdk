@@ -10,13 +10,13 @@ IoTConnect C SDK for Microchip AVR Arduino boards like AVR IoT Cellular Mini
  [AVR-IoT Cellular Mini UserGuide's Development Environment Section](https://iot.microchip.com/docs/arduino/introduction/devenv) 
 to set up and prepare your Arduino development environment.
 Ensure to follow the steps to install Arduino IDE version 2. 
-The code in this repo has only been tested with Arduino IDE 2.0.4.
+The code in this repo has been tested with Arduino IDE 2.0.4.
 * Once your SIM is activated and Arduino environment set up, 
 clone this repo into your Arduino sketch directory under the libraries directory.
 For example, once you clone this SDK, the contents of this repo will be 
-under *%USER%\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
-* **IMPORTANT:** After downloading AVR-IoT-Cellular library, ensure to enable the following features:
-
+under C:\Users\<your username>\Documents\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
+* **IMPORTANT:** After downloading AVR-IoT-Cellular library, ensure to enable the following features
+in atca_config.h located at at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src\cryptoauthlib: 
 ```c
 #define ATCAB_UPDATEEXTRA_EN              FEATURE_ENABLED
 // ...
@@ -25,15 +25,14 @@ under *%USER%\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
 
 * Open the Arduino IDE and load the avr-iot-provision example by navigating
 to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
-* Run the sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
+* Run the avr-iot-provision.ino sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
 * You should see an output similar to this:
 
 ```
+[INFO] Starting the provisioning sample...
+[INFO] Ciphersuites config written successfully.
 [INFO] HTTPS CA certificate updated successfuly.
 [INFO] MQTT CA certificate updated successfuly.
-[INFO] Initialized ECC608
-[INFO] Ciphersuites config written successfully.
-Device ID is avr-64c9fe1642154f1e44e9.
 -----BEGIN CERTIFICATE-----
 MIIB8DCCAZegAwIBAgIQZqxXFSHF/eOiwnn/0rSQLzAKBggqhkjOPQQDAjBPMSEw
 HwYDVQQKDBhNaWNyb2NoaXAgVGVjaG5vbG9neSBJbmMxKjAoBgNVBAMMIUNyeXB0
@@ -47,10 +46,14 @@ BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
 AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
-[INFO] ========= Provisioning Complete =========
+...
 ```
-
-* Obtain the fingerprint of the device certificate that is displayed on the screen.
+* Use the console at this point to provision your code with information found in your account:
+  * CPID
+  * Environment
+* You may choose to enter a blank Device Uinque ID (DUID), and in that case the default 
+auto-generated ID, unique for each board will user. This ID will be printed on the screen.
+* Obtain the fingerprint of the device certificate that is displayed on the screen above.
 This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
 * Note the **fingerprint** and the **Device ID** value and use it in the next steps.
 
@@ -63,31 +66,29 @@ use the Self-Signed authentication type and add one property called "version" of
 * Paste your SHA1 or SHA256 fingeprint obtained in the previous steps as the *Primary Thumbprint* value. 
 The pasted value should not contain colons. You may leave the *Secondary Thumbprint* value blank.
 
-## Running the Demo
+## Running Demo Code with Arduino IDE
 
 * Open the Arduino IDE and load the avr-iot-sample example by navigating
 to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-sample from the menu.
-* Edit the avr-iot-sample.cpp in the sketch par your account settings. Leave the IOTCONNECT_DUID blank:
-
-```C
-#define IOTCONNECT_CPID "your-cpid"
-#define IOTCONNECT_ENV "your-env"
-#define IOTCONNECT_DUID ""
-```
 * Run the sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
 * Upon successful connection, you should see an output similar to this:
 
 ```
-INFO] Starting the Sample Application 01.00.00
-[INFO] Connecting to operator....... OK!
-[INFO] Obtained Device ID from the secure element: avr-64c9fe1642154f1e44e9
-[INFO] +CCLK: "23/5/15,18:16:36-20"
+[INFO] Starting the Sample Application 01.00.00
+[INFO] CPID: avtds
+[INFO] Env : Avnet
+[INFO] DUID: avr-092ee282bb58cf55f34c66e3d3c
+[INFO] Connecting to operator......... OK!
+[INFO] +CCLK: "23/6/26,13:22:7-20"
 [INFO] CPID: avtd***
 [INFO] ENV:  Avnet
-[INFO] Connecting to poc-iotconnect-iothub-030-eu2.azure-devices.net ....[INFO] 
-IoTConnect Client Connected
+[INFO] Attempting to connect to MQTT host:poc-iotconnect-iothub-030-eu2.azure-de
+vices.net, client id:avtds-avr-092ee282bb58cf55f34c66e3d3c, username: poc-iotcon
+nect-iothub-030-eu2.azure-devices.net/avtds-avr-092ee282bb58cf55f34c66e3d3c/?api
+-version=2018-06-30
+[INFO] IoTConnect Client Connected
 [INFO] Sending: {"cpid":"avtds","dtg":"620c9902-17dd-46b0-a8a2-b20f77eed493","mt
-":0,"sdk":{"l":"M_C","v":"2.0","e":"Avnet"},"d":[{"id":"avr-64c9fe1642154f1e44e9
-","tg":"","d":[{"version":"01.00.00","cpu":3.1229999}],"dt":"2023-05-16T17:16:40
-.000Z"}],"t":"2023-05-16T17:16:40.000Z"}
+":0,"sdk":{"l":"M_C","v":"2.0","e":"Avnet"},"d":[{"id":"avr-092ee282bb58cf55f34c
+66e3d3c","tg":"","d":[{"version":"01.00.00","cpu":3.1229999}],"dt":"2023-05-16T1
+7:16:40.000Z"}],"t":"2023-05-16T17:16:40.000Z"}
 ```
