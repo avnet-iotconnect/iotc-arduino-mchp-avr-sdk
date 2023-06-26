@@ -4,7 +4,7 @@
 extern void demo_setup(void);
 extern void demo_loop(void);
 void setup() {
-#if 1
+#if 0
   Log.begin(115200);
   Log.info("started");
   delay(200);
