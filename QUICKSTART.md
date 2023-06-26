@@ -1,37 +1,31 @@
 ## Introduction
-IoTConnect C SDK for Microchip AVR Arduino boards like AVR IoT Cellular Mini.
+This is a QuickStart Guide for IoTConnect C SDK for Microchip AVR Arduino boards like AVR IoT Cellular Mini
 
-This guide is focusing on developing software with our IoTConnect C SDK.
+This guide is for those interested in evaluating and testing this board with IoTConnect.
 
-If you are interested in evaluating and testing this board with IoTConnect,
-then you may be interested in trying out our [Quickstart Guide](QUICKSTART.md)
+If you are interested in developing software with our IoTConnect C SDK, 
+then you may be interested in trying out our [Developer Guide](README.md)
 
-## Setup Instructions
+## SIM Card Activation
 
 * Follow the steps over the steps in the
  [Quick Start Guide for AVR® IoT Cellular Mini Board](https://www.hackster.io/grace-san-giacomo/quick-start-guide-for-avr-iot-cellular-mini-board-23e056)
  to connect the board components and register your Truphone SIM card.
-* Follow the
- [AVR-IoT Cellular Mini UserGuide's Development Environment Section](https://iot.microchip.com/docs/arduino/introduction/devenv) 
-to set up and prepare your Arduino development environment.
-Ensure to follow the steps to install Arduino IDE version 2. 
-The code in this repo has been tested with Arduino IDE 2.0.4.
-* Once your SIM is activated and Arduino environment set up, 
-clone this repo into your Arduino sketch directory under the libraries directory.
-For example, once you clone this SDK, the contents of this repo will be 
-under C:\Users\<your username>\Documents\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
-* **IMPORTANT:** After downloading AVR-IoT-Cellular library, ensure to enable the following features
-in atca_config.h located at at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src\cryptoauthlib: 
-```c
-#define ATCAB_UPDATEEXTRA_EN              FEATURE_ENABLED
-// ...
-#define ATCAB_WRITE_EN                    FEATURE_ENABLED
-```
 
-* Open the Arduino IDE and load the avr-iot-provision example by navigating
-to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
-* Run the avr-iot-provision.ino sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
-* You should see an output similar to this:
+## IoTConnect Firmware Loading
+
+* Download and extract the firmware at [this URL](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-dev-062623.zip)
+* The package will contain two files:
+  * avr-iot-provision.ino.hex: Provisioning firmware. You need to run this firmware once, so that it can configure the board.
+  * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
+* Connect the board to your PC using the Micro USB cable.
+* A new virtual drive will appear in your Windows Explored.
+* You can drag and drop the appropriate file into the new drive in order to load the firmware for each of the two sections below.
+
+## Provisioning
+
+* Load the Provisioning firmware image avr-iot-provision.ino.hex. 
+* Once the board boots, you should see an output similar to this:
 
 ```
 [INFO] Starting the provisioning sample...
@@ -51,7 +45,7 @@ BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
 AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
-
+...
 ```
 * Use the console at this point to provision your code with information found in your account:
   * CPID
@@ -62,21 +56,9 @@ auto-generated ID, unique for each board will user. This ID will be printed on t
 This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
 * Note the **fingerprint** and the **Device ID** value and use it in the next steps.
 
-## IoTConnect Setup
-
-* Log into your IoTConnect account and create a new template using the IoTConnect Web user interface.
-use the Self-Signed authentication type with a property with name "version" of type STRING and property with name
-"random" and type NUMBER.
-* Create a new device with name displayed on the provisioning sketch output above:
-* Select your template created in the previous step.
-* Paste your SHA1 or SHA256 fingerprint obtained in the previous steps as the *Primary Thumbprint* value. 
-The pasted value should not contain colons. You may leave the *Secondary Thumbprint* value blank.
-
 ## Running Demo Code with Arduino IDE
 
-* Open the Arduino IDE and load the avr-iot-sample example by navigating
-to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-sample from the menu.
-* Run the sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
+* Load the Sample firmware image avr-iot-sample.ino.hex. 
 * On a successful run, you should see an output similar to this:
 
 ```
