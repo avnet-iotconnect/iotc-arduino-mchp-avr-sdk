@@ -15,36 +15,6 @@
 
 #define APP_VERSION "01.00.00"
 
-#define SerialModule Serial3
-
-static const unsigned long initial_stack_address = SP;
-
-unsigned long get_free_ram () {
-    char *const heap_var = (char*) malloc(sizeof(char));
-    const unsigned long heap_address = (unsigned long) heap_var;
-    free(heap_var);
-
-    return SP - heap_address;
-}
-
-unsigned long get_heap_address () {
-    char *const heap_var = (char*) malloc(sizeof(char));
-    const unsigned long heap_address = (unsigned long) heap_var;
-    free(heap_var);
-    return heap_address;
-}
-
-void get_heap_state (char *buffer, size_t size) {
-    const unsigned long heap_address = get_heap_address();
-    const unsigned long heap_size = RAMEND - heap_address;
-    const long stack_size = initial_stack_address - SP;
-    const unsigned long free_ram = get_free_ram();
-    const unsigned long sp = SP;
-    const unsigned long ramend = RAMEND;
-    snprintf(buffer, size, "Heap Usage: %lu / %lu Stack Size: %lu Free RAM: %lu [Stack %lx:%lx Heap %lx:%lx]",
-            heap_size, heap_size + free_ram, stack_size, free_ram, initial_stack_address, sp, ramend, heap_address);
-}
-
 #define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
 #define GENERATED_ID_PREFIX "avr-"
 #define DUID_WEB_UI_MAX_LEN 31
@@ -155,15 +125,14 @@ static void publish_telemetry() {
     iotcl_destroy_serialized(str);
 }
 
-static void on_lte_disconnect(void) { 
-  connecteded_to_network = false; 
+static void on_lte_disconnect(void) {
+  connecteded_to_network = false;
 }
 
 static bool connect_lte() {
     // Connect with a maximum timeout value of 30 000 ms, if the connection is
     // not up and running within 30 seconds, abort and retry later
-    if (!Lte.begin(30000)) {
-        Log.warn("Failed to connect to operator.");
+    if (!Lte.begin()) {
         return false;
     } else {
         return true;
@@ -182,6 +151,7 @@ static bool load_provisioned_data(IotConnectClientConfig *config) {
   }
   return true;
 }
+
 #define MEMORY_TEST
 #ifdef MEMORY_TEST
 #define TEST_BLOCK_SIZE  1 * 128
@@ -192,10 +162,10 @@ void memory_test() {
     for (; i < TEST_BLOCK_COUNT; i++) {
         void *ptr = malloc(TEST_BLOCK_SIZE);
         Log.infof("0x%x\r\n", (unsigned long) ptr);
+        blocks[i] = ptr;
         if (!ptr) {
             break;
         }
-        blocks[i] = ptr;
     }
     Log.infof("====Allocated %d blocks of size %d (of max %d)===\r\n", i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
     for (int j = 0; j < i; j++) {
@@ -204,19 +174,43 @@ void memory_test() {
 }
 #endif /* MEMORY_TEST */
 
+#define RESERVE_BLOCK_SIZE  128
+#define RESERVE_BLOCK_COUNT 30
+#define RESERVE_LEAK_COUNT 5 // Leak the last X blocks
+void reserve_stack_with_heap_leak() {
+    void *blocks[RESERVE_BLOCK_COUNT];
+    int i = 0;
+    for (; i < RESERVE_BLOCK_COUNT; i++) {
+        void *ptr = malloc(RESERVE_BLOCK_SIZE);
+        blocks[i] = ptr;
+        if (!ptr) {
+            break;
+        }
+    }
+    Log.infof("====Allocated %d blocks of size %d (of max %d)===\r\n", i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
+    for (int j = 0; j < (i - RESERVE_LEAK_COUNT); j++) {
+        free(blocks[j]);
+    }
+}
+
 void demo_setup(void)
 {
-  Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);  
-  delay(200);
+  Log.begin(115200);
+  Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);
+  delay(2000);
 
-  memory_test();
+  // memory_test();
+  // reserve_stack_with_heap_leak(); // we may need to do this early to prevent corruption
+  // memory_test();
 
   if (ATCA_SUCCESS != iotc_ecc608_init_provision()) {
+    Log.error("Failed to read provisioning data!");
+    delay(10000);
     return; // caller will print the error
-  }  
+  }
 
   IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
-  if (!load_provisioned_data(config) 
+  if (!load_provisioned_data(config)
     || !config->cpid || 0 == strlen(config->cpid)
     || !config->env || 0 == strlen(config->env)
   ) {
@@ -230,21 +224,15 @@ void demo_setup(void)
     size_t buffer_size = AWS_ID_BUFF_SIZE - strlen(GENERATED_ID_PREFIX);
     if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, bufer_location, buffer_size)) {
       return; // caller will print the error
-    } 
+    }
     // terminate for max length
     aws_id_buff[DUID_WEB_UI_MAX_LEN] = 0;
 
     config->duid = aws_id_buff;
   }
 
-  { // scope block
-  char dbgbuff[200];
-  get_heap_state(dbgbuff,200);
-  Log.info(dbgbuff);
-  }
-
   Log.infof("CPID: %s\r\n", config->cpid);
-  Log.infof("Env : %s\r\n", config->env);
+  Log.infof("ENV : %s\r\n", config->env);
   Log.infof("DUID: %s\r\n", config->duid);
 
   if (!connect_lte()) {

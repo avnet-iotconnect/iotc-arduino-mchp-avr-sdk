@@ -28,7 +28,7 @@ static bool load_provisioned_data(IotConnectClientConfig *config) {
   if (ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_DUID, &(config->duid))) {
     return false; // caller will print the error
   }
-  bool ret = 0 != strlen(config->duid) && 0 != strlen(config->env);
+  bool ret = 0 != strlen(config->cpid) && 0 != strlen(config->env);
   if (!ret) {
     Log.info("Device does not have the configuration in storage. Please set up the device.");
   }
