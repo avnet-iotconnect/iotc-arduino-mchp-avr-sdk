@@ -60,7 +60,8 @@ This can be done with openssl command line or [this web site](https://www.samlto
 ## IoTConnect Setup
 
 * Log into your IoTConnect account and create a new template using the IoTConnect Web user interface.
-use the Self-Signed authentication type and add one property called "version" of type STRING.
+use the Self-Signed authentication type with a property with name "version" of type STRING and property with name
+"random" and type NUMBER.
 * Create a new device with name displayed on the provisioning sketch output above:
 * Select your template created in the previous step.
 * Paste your SHA1 or SHA256 fingeprint obtained in the previous steps as the *Primary Thumbprint* value. 
