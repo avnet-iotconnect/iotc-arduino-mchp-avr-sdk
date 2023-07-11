@@ -17,7 +17,7 @@ int iotconnect_https_request(
 ) {
     response->data = NULL;
     if (!HttpClient.configure(host, 443, true)) {
-        Log.error("Failed to configure https client");
+        Log.error(F("Failed to configure https client"));
         return -1;
     }
 
@@ -55,7 +55,7 @@ int iotconnect_https_request(
     String body = HttpClient.readBody(data_size);
     size_t body_length = body.length();
     if (0 == body_length) {
-        Log.error("Http response was empty");
+        Log.error(F("Http response was empty"));
         return -1;
     }
     response->data = (char *) malloc(body_length + 1);

@@ -153,10 +153,10 @@ static bool write_ciphersuite_config(void) {
 
   // Wait for URC confirming the security profile
   if (!SequansController.waitForURC("SQNSPCFG", NULL, 0, 4000)) {
-    Log.error("writeCiphersuiteConfig: Unable to communicate with the modem!");
+    Log.error(F("writeCiphersuiteConfig: Unable to communicate with the modem!"));
     return false;
   }
-  Log.info("Ciphersuites config written successfully.");
+  Log.info(F("Ciphersuites config written successfully."));
   return true;
 }
 
@@ -173,7 +173,7 @@ static bool write_http_security_profile(void) {
 
   // Wait for URC confirming the security profile
   if (!SequansController.waitForURC("SQNSPCFG", NULL, 0, 4000)) {
-      Log.error("Error whilst doing the provisioning");
+      Log.error(F("Error whilst doing the provisioning"));
       return false;
   }
 
@@ -185,15 +185,15 @@ static bool write_ca_server_certificates(void) {
   SequansController.begin();
 
   if (!write_ca_server_certificate(CERT_GODADDY_ROOT_CA_G2, HTTP_CUSTOM_CA_SLOT)) {
-    Log.error("Unable to store the HTTP CA certificate!");
+    Log.error(F("Unable to store the HTTP CA certificate!"));
     return false;
   }
-  Log.info("HTTPS CA certificate updated successfuly.");
+  Log.info(F("HTTPS CA certificate updated successfuly."));
   if (!write_ca_server_certificate(CERT_BALTIMORE_ROOT_CA, MQTT_CUSTOM_CA_SLOT)) {
-    Log.error("Unable to store the MQTT CA certificate!");
+    Log.error(F("Unable to store the MQTT CA certificate!"));
     return false;
   }
-  Log.info("MQTT CA certificate updated successfuly.");
+  Log.info(F("MQTT CA certificate updated successfuly."));
   return true;
 }
 

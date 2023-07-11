@@ -31,39 +31,39 @@ static void dump_response(const char *message, IotConnectHttpResponse *response)
 
 static void report_sync_error(IotclSyncResponse *response, const char *sync_response_str) {
     if (NULL == response) {
-        Log.error("Failed to obtain sync response");
+        Log.error(F("Failed to obtain sync response"));
         return;
     }
     switch (response->ds) {
         case IOTCL_SR_DEVICE_NOT_REGISTERED:
-            Log.error("IOTC_SyncResponse error: Not registered");
+            Log.error(F("IOTC_SyncResponse error: Not registered"));
             break;
         case IOTCL_SR_AUTO_REGISTER:
-            Log.error("IOTC_SyncResponse error: Auto Register");
+            Log.error(F("IOTC_SyncResponse error: Auto Register"));
             break;
         case IOTCL_SR_DEVICE_NOT_FOUND:
-            Log.error("IOTC_SyncResponse error: Device not found");
+            Log.error(F("IOTC_SyncResponse error: Device not found"));
             break;
         case IOTCL_SR_DEVICE_INACTIVE:
-            Log.error("IOTC_SyncResponse error: Device inactive");
+            Log.error(F("IOTC_SyncResponse error: Device inactive"));
             break;
         case IOTCL_SR_DEVICE_MOVED:
-            Log.error("IOTC_SyncResponse error: Device moved");
+            Log.error(F("IOTC_SyncResponse error: Device moved"));
             break;
         case IOTCL_SR_CPID_NOT_FOUND:
-            Log.error("IOTC_SyncResponse error: CPID not found");
+            Log.error(F("IOTC_SyncResponse error: CPID not found"));
             break;
         case IOTCL_SR_UNKNOWN_DEVICE_STATUS:
-            Log.error("IOTC_SyncResponse error: Unknown device status error from server");
+            Log.error(F("IOTC_SyncResponse error: Unknown device status error from server"));
             break;
         case IOTCL_SR_ALLOCATION_ERROR:
-            Log.error("IOTC_SyncResponse internal error: Allocation Error");
+            Log.error(F("IOTC_SyncResponse internal error: Allocation Error"));
             break;
         case IOTCL_SR_PARSING_ERROR:
-            Log.error("IOTC_SyncResponse internal error: Parsing error. Please check parameters passed to the request.");
+            Log.error(F("IOTC_SyncResponse internal error: Parsing error. Please check parameters passed to the request."));
             break;
         default:
-            Log.warn("WARN: report_sync_error called, but no error returned?");
+            Log.warn(F("WARN: report_sync_error called, but no error returned?"));
             break;
     }
     Log.errorf("Raw server response was:\r\n--------------\r\n%s\r\n--------------\r\n", sync_response_str);
@@ -123,7 +123,7 @@ static IotclSyncResponse *run_http_sync(IotclDiscoveryResponse* dr, const char *
     char *post_data = (char *)malloc(IOTCONNECT_DISCOVERY_PROTOCOL_POST_DATA_MAX_LEN + 1);
 
     if (!post_data) {
-        Log.error("run_http_sync: Out of memory!");
+        Log.error(F("run_http_sync: Out of memory!"));
         return NULL;
     }
 
@@ -178,13 +178,13 @@ static IotclSyncResponse *run_http_sync(IotclDiscoveryResponse* dr, const char *
 static void on_mqtt_c2d_message(const char* message) {
     Log.infof("event>>> %s", message);
     if (!iotcl_process_event(message)) {
-        Log.error("Error encountered while processing the message");
+        Log.error(F("Error encountered while processing the message"));
     }
 }
 
 void iotconnect_sdk_disconnect(void) {
     iotc_mqtt_client_disconnect();
-    Log.info("Disconnected.");
+    Log.info(F("Disconnected."));
 }
 
 bool iotconnect_sdk_is_connected(void) {
@@ -203,11 +203,11 @@ IotclConfig *iotconnect_sdk_get_lib_config(void) {
 static void on_message_intercept(IotclEventData data, IotConnectEventType type) {
     switch (type) {
         case ON_FORCE_SYNC:
-            Log.info("Got ON_FORCE_SYNC. Disconnecting.");
+            Log.info(F("Got ON_FORCE_SYNC. Disconnecting."));
             iotconnect_sdk_disconnect(); // client will get notification that we disconnected and will reinit
 
         case ON_CLOSE:
-            Log.info("Got a disconnect request. Closing the mqtt connection. Device restart is required.");
+            Log.info(F("Got a disconnect request. Closing the mqtt connection. Device restart is required."));
             iotconnect_sdk_disconnect();
         default:
             break; // not handling nay other messages
@@ -230,7 +230,7 @@ void iotconnect_sdk_loop(void) {
 // this the Initialization os IoTConnect SDK
 bool iotconnect_sdk_init(void) {
     if (!config.cpid || !config.env || !config.duid) {
-        Log.error("CPID, Environment and DUID are required for iotconnect_sdk_init()");
+        Log.error(F("CPID, Environment and DUID are required for iotconnect_sdk_init()"));
         return false;
     }
     if (mqtt_config.sr) {
@@ -252,7 +252,7 @@ bool iotconnect_sdk_init(void) {
     iotc_get_time_modem();
 
     if (!config.env || !config.cpid || !config.duid) {
-        Log.error("Error: Device configuration is invalid. Configuration values for env, cpid and duid are required.");
+        Log.error(F("Error: Device configuration is invalid. Configuration values for env, cpid and duid are required."));
         return false;
     }
 
@@ -269,14 +269,14 @@ bool iotconnect_sdk_init(void) {
     Log.infof("ENV:  %s\r\n", config.env);
 
     if (!iotcl_init(&lib_config)) {
-        Log.error("Error: Failed to initialize the IoTConnect Lib");
+        Log.error(F("Error: Failed to initialize the IoTConnect Lib"));
         return false;
     }
 
     mqtt_config.status_cb = config.status_cb;
     mqtt_config.c2d_msg_cb = on_mqtt_c2d_message;
     if (!iotc_mqtt_client_init(&mqtt_config)) {
-        Log.error("Failed to connect!");
+        Log.error(F("Failed to connect!"));
         return false;
     }
 

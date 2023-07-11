@@ -55,12 +55,12 @@ static time_t do_http_get_time(void) {
     String body = HttpClient.readBody(512);
 
     if (body == "") {
-        Log.error("http_get_time:  The returned body from the GET request is empty!");
+        Log.error(F("http_get_time:  The returned body from the GET request is empty!"));
         return 0;
     }
     time_t now = parse_time_from_response(&body);
     if (0 == now) {
-        Log.error("http_get_time: Unable to process the time response!");
+        Log.error(F("http_get_time: Unable to process the time response!"));
         return 0;
     }
     rtc_start = now - (time_t)(millis()/1000);
@@ -99,7 +99,7 @@ static time_t cclk_response_to_time_t(const char* time_str)
     }
 
     if (70 == yy) {
-        Log.warn("Modem time is not ready");
+        Log.warn(F("Modem time is not ready"));
         return 0; // I guess this could be 1970. Modem seems to report "70/01/01,00:02:21+00" when offline
     }
     now_tm.tm_isdst = -1;
@@ -132,7 +132,7 @@ time_t iotc_get_time_modem(void) {
 
     ResponseResult res = SequansController.writeCommand( "AT+CCLK?", response_buffer, sizeof(response_buffer));
     if (res != ResponseResult::OK) {
-        Log.error("Failed to retrieve successful response time from the modem");
+        Log.error(F("Failed to retrieve successful response time from the modem"));
         return 0;
     }
 
@@ -141,7 +141,7 @@ time_t iotc_get_time_modem(void) {
         0,
         value_buffer,
         sizeof(value_buffer))) {
-            Log.error("Failed to retrieve time from the modem");
+            Log.error(F("Failed to retrieve time from the modem"));
             return 0;
     }
     Log.debugf("Time AT response: >>%s<<\r\n", response_buffer);

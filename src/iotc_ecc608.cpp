@@ -121,7 +121,7 @@ static ATCA_STATUS iotc_ecc608_get_string_value_internal(ecc_data_types data_typ
             return ATCA_INVALID_ID;
 
         default:
-            Log.error("IOTC_ECC608: Only IOTCONNECT data types are supported. Use copy_string_value instead.");
+            Log.error(F("IOTC_ECC608: Only IOTCONNECT data types are supported. Use copy_string_value instead."));
             return ATCA_BAD_PARAM;
     }
 }
@@ -138,14 +138,14 @@ static ATCA_STATUS iotc_ecc608_set_string_value_internal(ecc_data_types data_typ
                 case IOTC_ECC608_PROV_DUID:
                     // iotconnect data re null terminated strings
                     if ((strlen(value) + 1) > size) {
-                        Log.error("IOTC_ECC608: String size is larger than reserved size!");
+                        Log.error(F("IOTC_ECC608: String size is larger than reserved size!"));
                         return ATCA_INVALID_LENGTH;
                     }
                     strcpy(ecchdr_data_ptr(h), value);
                     break;
                 default:
                     if ((strlen(value)) > size) {
-                        Log.error("IOTC_ECC608: String size is larger than reserved size!");
+                        Log.error(F("IOTC_ECC608: String size is larger than reserved size!"));
                         return ATCA_INVALID_LENGTH;
                     }
                     memcpy(ecchdr_data_ptr(h), value, size);
@@ -155,7 +155,7 @@ static ATCA_STATUS iotc_ecc608_set_string_value_internal(ecc_data_types data_typ
         }
         h = ecchdr_next(h);
     }
-    Log.error("IOTC_ECC608: Data type %d was not found in storage. Unable to write value.!");
+    Log.error(F("IOTC_ECC608: Data type %d was not found in storage. Unable to write value.!"));
     return ATCA_INVALID_ID;
 }
 
@@ -174,7 +174,7 @@ static ATCA_STATUS load_ecc608_cache(void) {
     }
 
     if (slot_size != IOTC_DATA_SLOT_SIZE) {
-        Log.error("IOTC_ECC608: Unexpected data slot size received from ECC608!"); // Unlikely, so just a safeguard
+        Log.error(F("IOTC_ECC608: Unexpected data slot size received from ECC608!")); // Unlikely, so just a safeguard
     }
 
     atca_status = atcab_read_bytes_zone(
@@ -185,7 +185,7 @@ static ATCA_STATUS load_ecc608_cache(void) {
         slot_size
     );
     if (ATCA_SUCCESS != atca_status) {
-        Log.error("IOTC_ECC608: Failed to read provisioning info!");
+        Log.error(F("IOTC_ECC608: Failed to read provisioning info!"));
         return atca_status;
     }
 
@@ -196,13 +196,13 @@ static ATCA_STATUS load_ecc608_cache(void) {
             if (ecchdr_get_data_size(h) != sizeof(IOTC_ECC608_PROV_DATA_VERSION)
                 || 0 != strcmp(IOTC_ECC608_PROV_DATA_VERSION, ecchdr_data_ptr(h))
             ) {
-                Log.error("IOTC_ECC608: Unexpected iotconnect data version!");
+                Log.error(F("IOTC_ECC608: Unexpected iotconnect data version!"));
             }
             has_iotconnect_data = true; // all or nothing
         }
         h = ecchdr_next(h);
         if ((char*)h > &data_cache[IOTC_DATA_SLOT_SIZE]) {
-            Log.error("IOTC_ECC608: Could not find empty provisioning data header!"); // ran off past the end of data
+            Log.error(F("IOTC_ECC608: Could not find empty provisioning data header!")); // ran off past the end of data
         }
     }
     if (!has_iotconnect_data) {
@@ -219,7 +219,7 @@ void iotc_ecc608_dump_provision_data(void) {
         size_t size = ecchdr_get_data_size(h);
         char buffer[ECC608_MAX_DATA_ENTRY_SIZE];
         if (size > ECC608_MAX_DATA_ENTRY_SIZE) {
-            Log.warn("IOTC_ECC608: WARNING: ECC608 provisioning entry larger than expected!");
+            Log.warn(F("IOTC_ECC608: WARNING: ECC608 provisioning entry larger than expected!"));
             buffer[0] = 0; // null terminate to empty
         } else {
             memcpy(buffer, ecchdr_data_ptr(h), size);
@@ -243,12 +243,12 @@ ATCA_STATUS iotc_ecc608_init_provision(void) {
     // TODO: for some reason ECC608.begin() fails, which is better, sems to fail here
     atca_status = atcab_init(&cfg_atecc608b_i2c);
     if (atca_status != ATCA_SUCCESS) {
-        Log.error("Failed to initialize ECC608!");
+        Log.error(F("Failed to initialize ECC608!"));
         return atca_status;
     }
     atca_status = load_ecc608_cache();
     if (atca_status != ATCA_SUCCESS) {
-        Log.error("failed to load ecc608 cache!");
+        Log.error(F("failed to load ecc608 cache!"));
         return atca_status;
     }
     return ATCA_SUCCESS;
@@ -257,7 +257,7 @@ ATCA_STATUS iotc_ecc608_init_provision(void) {
 ATCA_STATUS iotc_ecc608_get_string_value(ecc_data_types data_type, char ** value) {
     if (data_type == IOTC_ECC608_PROV_VER) {
         *value = NULL;
-        Log.warn("IOTC_ECC608: Warning: User code should not be reading IOTC_ECC608_PROV_VER");
+        Log.warn(F("IOTC_ECC608: Warning: User code should not be reading IOTC_ECC608_PROV_VER"));
     }
     return iotc_ecc608_get_string_value_internal(data_type, value);
 }
@@ -288,7 +288,7 @@ ATCA_STATUS iotc_ecc608_copy_string_value(ecc_data_types data_type, char *buffer
 
                 default:
                     if(buffer_size < (ecchdr_get_data_size(h) + 1)) {
-                        Log.error("IOTC_ECC608: No room to copy the full value");
+                        Log.error(F("IOTC_ECC608: No room to copy the full value"));
                         return ATCA_INVALID_SIZE;
                     }
                     size_t data_size = ecchdr_get_data_size(h);
@@ -305,7 +305,7 @@ ATCA_STATUS iotc_ecc608_copy_string_value(ecc_data_types data_type, char *buffer
 
 ATCA_STATUS iotc_ecc608_set_string_value(ecc_data_types data_type, const char * value) {
     if (data_type == IOTC_ECC608_PROV_VER) {
-        Log.error("IOTC_ECC608: Warning: User code should not be writing IOTC_ECC608_PROV_VER");
+        Log.error(F("IOTC_ECC608: Warning: User code should not be writing IOTC_ECC608_PROV_VER"));
         return ATCA_BAD_PARAM;
     }
     return iotc_ecc608_set_string_value_internal(data_type, value);

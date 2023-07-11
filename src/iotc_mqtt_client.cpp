@@ -19,7 +19,7 @@ static bool disconnect_received = false;
 static IotConnectMqttClientConfig* c = NULL;
 
 void iotc_mqtt_client_disconnect(void) {
-    Log.info("Closing the MQTT connection");
+    Log.info(F("Closing the MQTT connection"));
     MqttClient.end();
 }
 
@@ -33,7 +33,7 @@ bool iotc_mqtt_client_send_message(const char *message) {
 
 void iotc_mqtt_client_loop() {
     if (!c || !c->sr) {
-        Log.error("iotc_mqtt_client_loop(): Client not initialized!");
+        Log.error(F("iotc_mqtt_client_loop(): Client not initialized!"));
         return;
     }
     if (!MqttClient.isConnected()) {
@@ -71,18 +71,18 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
     disconnect_received = false;
     c = config;
     if (!c) {
-        Log.error("iotc_mqtt_client_init() called with invalid arguments");
+        Log.error(F("iotc_mqtt_client_init() called with invalid arguments"));
     }
 
     if (!Lte.isConnected()) {
-        Log.error("LTE must be up and running before initializing MQTT");
+        Log.error(F("LTE must be up and running before initializing MQTT"));
         return false;
     }
 
     // Initialize the ECC
     ATCA_STATUS status = ECC608.begin();
     if (status != ATCACERT_E_SUCCESS) {
-        Log.error("Could not initialize ECC hardware");
+        Log.error(F("Could not initialize ECC hardware"));
         return false;
     }
 
@@ -114,7 +114,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
     while (!MqttClient.isConnected()) {
         tires_num_500ms--;
         if (tires_num_500ms < 0) {
-            Log.raw(""); // start in a new line
+            Log.raw(F("")); // start in a new line
             Log.errorf("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
                 c->sr->broker.host,
                 c->sr->broker.client_id,
