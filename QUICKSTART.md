@@ -30,7 +30,7 @@ then you should refer to the [Developer Guide](README.md)
 ## Provisioning
 
 * Install a serial console application, such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
-* Open the serial console application and establish a connection to the board in order to see the provisioning optput.
+* Open the serial console application and establish a connection to the board in order to see the provisioning output.
 * Load the Provisioning firmware image avr-iot-provision.ino.hex.
 * Once the board boots, you should see an output similar to this in the serial console:
 
