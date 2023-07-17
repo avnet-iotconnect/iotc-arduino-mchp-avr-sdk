@@ -25,11 +25,12 @@ then you should refer to the [Developer Guide](README.md)
   * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
 * Connect the board to your PC using the Micro USB cable.
 * A new virtual drive will appear in your Windows Explorer.
-* You can drag and drop the appropriate file into the new drive in order to load the firmware for each of the two sections below.
+* You can drag and drop or copy-paste the appropriate file into the new drive in order to load the firmware for each of the two sections below.
 
 ## Provisioning
 
 * Install a serial console application, such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
+* Open the serial console application and establish a connection to the board in order to see the provisioning optput.
 * Load the Provisioning firmware image avr-iot-provision.ino.hex.
 * Once the board boots, you should see an output similar to this in the serial console:
 

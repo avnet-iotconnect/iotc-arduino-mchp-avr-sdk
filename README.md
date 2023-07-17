@@ -39,6 +39,7 @@ in atca_config.h located at at C:\Users\<your username>\Documents\Arduino\librar
 
 * Open the Arduino IDE and load the avr-iot-provision example by navigating
 to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
+* Open the serial console application and establish a connection to the board in order to see the provisioning optput.
 * Run the avr-iot-provision.ino sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
 * You should see an output similar to this:
 
