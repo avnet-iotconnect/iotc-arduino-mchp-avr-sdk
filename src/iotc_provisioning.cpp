@@ -146,7 +146,7 @@ static bool write_ciphersuite_config(void) {
   );
   // Just in case someone made a mistake on size. Let's not walk over unowned memory.
   command[command_size] = '\0';
-  Log.infof("MQTT profile: %s\r\n", command);
+  Log.info(F("Setting up MQTT profile #1 and ciphersuites..."));
   SequansController.writeBytes((uint8_t*)command,
     strlen(command),
     true
@@ -154,10 +154,10 @@ static bool write_ciphersuite_config(void) {
 
   // Wait for URC confirming the security profile
   if (!SequansController.waitForURC("SQNSPCFG", NULL, 0, 4000)) {
-    Log.error(F("writeCiphersuiteConfig: Unable to communicate with the modem!"));
+    Log.error(F("write_ciphersuite_config: Unable to communicate with the modem!"));
     return false;
   }
-  Log.info(F("Ciphersuites config written successfully."));
+  Log.info(F("MQTT profile and ciphersuite config written successfully."));
   return true;
 }
 
@@ -169,7 +169,7 @@ static bool write_http_security_profile(void) {
   char command[strlen(AT_HTTPS_SECURITY_PROFILE) + 64] = "";
 
   sprintf(command, AT_HTTPS_SECURITY_PROFILE, TLS_v1_2, 1, ca_index);
-  Log.infof("HTTPS profile: %s\r\n", command);
+  Log.info(F("Setting up HTTP profile #3.."));
   SequansController.writeBytes((uint8_t*)command, strlen(command), true);
 
   // Wait for URC confirming the security profile
@@ -177,6 +177,7 @@ static bool write_http_security_profile(void) {
       Log.error(F("Error whilst doing the provisioning"));
       return false;
   }
+  Log.info(F("HTTP profile was set up successfully."));
 
   SequansController.clearReceiveBuffer();
   return true;
