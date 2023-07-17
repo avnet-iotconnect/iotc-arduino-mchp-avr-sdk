@@ -4,13 +4,18 @@ This is a QuickStart Guide for IoTConnect C SDK for Microchip AVR Arduino boards
 This guide is for those interested in evaluating and testing this board with IoTConnect.
 
 If you are interested in developing software with our IoTConnect C SDK, 
-then you may be interested in trying out our [Developer Guide](README.md)
+then you should refer to the [Developer Guide](README.md)
 
 ## SIM Card Activation
 
-* Follow the steps over the steps in the
- [Quick Start Guide for AVR® IoT Cellular Mini Board](https://www.hackster.io/grace-san-giacomo/quick-start-guide-for-avr-iot-cellular-mini-board-23e056)
- to connect the board components and register your Truphone SIM card.
+* Your board package should contain a Truphone SIM. Follow these steps to activate it:
+  * Create an account or log in at the [Truphone Sign up page](https://account.truphone.com/register)
+  * Activate your SIM from your account's dashboard page and following the steps outlined in the activation process. 
+    See the screenshot below:
+
+![Truphone Activation](media/truphone-activate-sim.png "Truphone Activation")
+
+* Install the sim into the SIM slot on the board.
 
 ## IoTConnect Firmware Loading
 
@@ -19,13 +24,14 @@ then you may be interested in trying out our [Developer Guide](README.md)
   * avr-iot-provision.ino.hex: Provisioning firmware. You need to run this firmware once, so that it can configure the board.
   * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
 * Connect the board to your PC using the Micro USB cable.
-* A new virtual drive will appear in your Windows Explored.
+* A new virtual drive will appear in your Windows Explorer.
 * You can drag and drop the appropriate file into the new drive in order to load the firmware for each of the two sections below.
 
 ## Provisioning
 
-* Load the Provisioning firmware image avr-iot-provision.ino.hex. 
-* Once the board boots, you should see an output similar to this:
+* Install a serial console application, such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
+* Load the Provisioning firmware image avr-iot-provision.ino.hex.
+* Once the board boots, you should see an output similar to this in the serial console:
 
 ```
 [INFO] Starting the provisioning sample...

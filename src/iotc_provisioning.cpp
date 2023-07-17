@@ -120,7 +120,7 @@ static bool write_ciphersuite_config(void) {
   // This section definiton matches the list in provision.ino sample provided by the AVR-IoT-Cellular Library
   // Ultimately, the command should be AT+SQNSPCFG=1,2,"0xC027",1,16,18,0,"","",1 when using TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   //const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
-  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=2,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
+  const char* AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC = "AT+SQNSPCFG=1,%u,\"%s\",%u,%u,%u,%u,\"%s\",\"%s\",1";
   const char* CIPHER49 = "0xC027"; // TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256
   const unsigned int TLS_v1_2 = 2;
   const char* psk = "";
@@ -137,7 +137,7 @@ static bool write_ciphersuite_config(void) {
     AT_MQTT_SECURITY_PROFILE_WITH_CERTIFICATES_ECC,
     TLS_v1_2,
     CIPHER49,
-    1,
+    1, // always validate
     ca_index,
     MQTT_PUBLIC_KEY_SLOT,
     MQTT_PRIVATE_KEY_SLOT,
@@ -146,6 +146,7 @@ static bool write_ciphersuite_config(void) {
   );
   // Just in case someone made a mistake on size. Let's not walk over unowned memory.
   command[command_size] = '\0';
+  Log.infof("MQTT profile: %s\r\n", command);
   SequansController.writeBytes((uint8_t*)command,
     strlen(command),
     true
@@ -168,7 +169,7 @@ static bool write_http_security_profile(void) {
   char command[strlen(AT_HTTPS_SECURITY_PROFILE) + 64] = "";
 
   sprintf(command, AT_HTTPS_SECURITY_PROFILE, TLS_v1_2, 1, ca_index);
-
+  Log.infof("HTTPS profile: %s\r\n", command);
   SequansController.writeBytes((uint8_t*)command, strlen(command), true);
 
   // Wait for URC confirming the security profile

@@ -8,19 +8,28 @@ then you may be interested in trying out our [Quickstart Guide](QUICKSTART.md)
 
 ## Setup Instructions
 
-* Follow the steps over the steps in the
- [Quick Start Guide for AVR® IoT Cellular Mini Board](https://www.hackster.io/grace-san-giacomo/quick-start-guide-for-avr-iot-cellular-mini-board-23e056)
- to connect the board components and register your Truphone SIM card.
+* Arduino IDE in Carriage Return input mode may suffice, but it is recommended to install a serial console application, 
+such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
+
+* Your board package should contain a Truphone SIM. Follow these steps to activate it:
+  * Create an account or log in at the [Truphone Sign up page](https://account.truphone.com/register)
+  * Activate your SIM from your account's dashboard page and following the steps outlined in the activation process. 
+    See the screenshot below:
+
+![Truphone Activation](media/truphone-activate-sim.png "Truphone Activation")
+
+* Install the sim into the SIM slot on the board.
+
 * Follow the
  [AVR-IoT Cellular Mini UserGuide's Development Environment Section](https://iot.microchip.com/docs/arduino/introduction/devenv) 
 to set up and prepare your Arduino development environment.
-Ensure to follow the steps to install Arduino IDE version 2. 
-The code in this repo has been tested with Arduino IDE 2.0.4.
+The project has been tested with Arduino IDE 2.0.4 and AVR-IoT-Cellular library version 1.3.7.
+It is recommended that you install these specific versions.
 * Once your SIM is activated and Arduino environment set up, 
 clone this repo into your Arduino sketch directory under the libraries directory.
-For example, once you clone this SDK, the contents of this repo will be 
+For example, once you clone this SDK, the contents of this repo should be 
 under C:\Users\<your username>\Documents\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
-* **IMPORTANT:** After downloading AVR-IoT-Cellular library, ensure to enable the following features
+* **IMPORTANT:** After downloading or opgrading AVR-IoT-Cellular library, ensure to enable the following features
 in atca_config.h located at at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src\cryptoauthlib: 
 ```c
 #define ATCAB_UPDATEEXTRA_EN              FEATURE_ENABLED
