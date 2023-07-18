@@ -15,11 +15,11 @@ then you should refer to the [Developer Guide](README.md)
 
 ![Truphone Activation](media/truphone-activate-sim.png "Truphone Activation")
 
-* Install the sim into the SIM slot on the board.
+* Install the SIM into board by sliding the notched-corner of the card in with the Truphone logo facing outwards.
 
 ## IoTConnect Firmware Loading
 
-* Download and extract the firmware at [this URL](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)
+* Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip))
 * The package will contain two files:
   * avr-iot-provision.ino.hex: Provisioning firmware. You need to run this firmware once, so that it can configure the board.
   * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
