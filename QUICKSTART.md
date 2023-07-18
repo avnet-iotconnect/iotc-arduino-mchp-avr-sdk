@@ -18,12 +18,12 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 ***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
 
 * Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)).
-* The package will contain two files:
-  * avr-iot-provision.ino.hex: Provisioning firmware. You need to run this firmware once, so that it can configure the board.
-  * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
+* The package contains two files:
+  * **avr-iot-provision.ino.hex:** Provisioning firmware. This will need to be loaded and run once to provision the board.
+  * **avr-iot-sample.ino.hex:** Sample firmware. This is the sample code which needs to be loaded only after the provisioning firmware has been run.
 * Connect the board to your PC using a USB A to USB C cable.
 * A new virtual drive will appear in your Windows Explorer.
-* You can drag and drop or copy-paste the appropriate file into the new drive in order to load the firmware for each of the two sections below.
+* Drag and drop or copy-paste the appropriate file into the new drive in order to load the firmware for each of the two sections below.
 
 ## Provisioning
 
