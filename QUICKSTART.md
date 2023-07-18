@@ -14,6 +14,10 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 * Install the SIM into board by sliding the notched-corner end of the SIM in with the Truphone logo facing outwards.
 
+## Cloud Account Setup
+An IoTConnect account is required to continue this guide. If you need to create an account, a free 2-month subscription is available.  Please follow the [Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md) guide and return to this guide once complete.
+* The IoTConnect CPID and Environment values will be required when provisioning the board. These values can be located in the IoTConnect WebUI on the Key Vault page. Copy these values for future use.
+
 ## IoTConnect Firmware
 ***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
 
@@ -24,9 +28,6 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 * Connect the board to your PC using a USB A to USB C cable.
 * A new virtual drive will appear in your Windows Explorer.
 * Follow the provisioning steps in the section below.
-
-## Cloud Account Setup
-An IoTConnect account is required to continue this guide. If you need to create an account, a free 2-month subscription is available.  Please follow the [Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md) guide and return to this guide once complete.
 
 ## Provisioning
 
