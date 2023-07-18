@@ -15,7 +15,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 * Install the SIM into board by sliding the notched-corner end of the SIM in with the Truphone logo facing outwards.
 
 ## IoTConnect Firmware Loading
-*Note: This process will require a USB A to USB C cable which is not included in the AVR-IoT Cell Mini kit.
+***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
 
 * Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)).
 * The package will contain two files:
