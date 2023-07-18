@@ -5,7 +5,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 ## SIM Card Activation
 
-* The AVR-IoT Cell Mini Kit contains a Truphone SIM. Follow the steps below to create am account and activate it.
+* The AVR-IoT Cell Mini Kit contains a Truphone SIM. Follow the steps below to create an account and activate it.
   * Create an account or log in with an existing account at the [Truphone Sign-up page](https://account.truphone.com/register).
   * Activate the SIM from the account dashboard page by following the steps outlined in the activation process. 
     See the screenshot below for reference:
