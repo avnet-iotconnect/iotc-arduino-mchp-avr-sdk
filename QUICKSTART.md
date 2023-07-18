@@ -4,7 +4,7 @@ This is a QuickStart Guide for IoTConnect C SDK for Microchip AVR Arduino boards
 This guide is for those interested in evaluating and testing this board with IoTConnect.
 
 If you are interested in developing software with our IoTConnect C SDK, 
-then you should refer to the [Developer Guide](README.md)
+then refer to the [Developer Guide](README.md)
 
 ## SIM Card Activation
 
@@ -19,7 +19,7 @@ then you should refer to the [Developer Guide](README.md)
 
 ## IoTConnect Firmware Loading
 
-* Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip))
+* Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)).
 * The package will contain two files:
   * avr-iot-provision.ino.hex: Provisioning firmware. You need to run this firmware once, so that it can configure the board.
   * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
