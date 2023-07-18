@@ -23,7 +23,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
   * **avr-iot-sample.ino.hex:** Sample firmware. This is the actual sample code which should be loaded only after the board has been provisioned.
 * Connect the board to your PC using a USB A to USB C cable.
 * A new virtual drive will appear in your Windows Explorer.
-* Follow the provsioning steps in the section below.
+* Follow the provisioning steps in the section below.
 
 ## Cloud Account Setup
 An IoTConnect account is required to continue this guide. If you need to create an account, a free 2-month subscription is available.  Please follow the [Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md) guide and return to this guide once complete.
