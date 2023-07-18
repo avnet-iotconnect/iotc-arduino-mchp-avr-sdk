@@ -13,7 +13,7 @@
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
 
-#define APP_VERSION "01.00.00"
+#define APP_VERSION "01.01.00"
 
 #define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
 #define GENERATED_ID_PREFIX "avr-"
@@ -264,7 +264,7 @@ void demo_setup(void)
   }
 
   iotconnect_sdk_disconnect();
-  Lte.end();    
+  Lte.end();
   printf("Done.\n");
 }
 
