@@ -51,7 +51,6 @@ BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
 AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
-...
 ```
 * Use the console at this point to provision your code with information found in your account:
   * CPID
