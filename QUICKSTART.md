@@ -12,7 +12,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 ![Truphone Activation](media/truphone-activate-sim.png "Truphone Activation")
 
-* Install the SIM into board by sliding the notched-corner of the card in with the Truphone logo facing outwards.
+* Install the SIM into board by sliding the notched-corner end of the SIM in with the Truphone logo facing outwards.
 
 ## IoTConnect Firmware Loading
 
