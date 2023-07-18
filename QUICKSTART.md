@@ -19,18 +19,19 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 * Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)).
 * The package contains two files:
-  * **avr-iot-provision.ino.hex:** Provisioning firmware. This will need to be loaded and run once to provision the board.
-  * **avr-iot-sample.ino.hex:** Sample firmware. This is the sample code which needs to be loaded only after the provisioning firmware has been run.
+  * **avr-iot-provision.ino.hex:** Provisioning firmware. This will need to be loaded and run once to provision the board with the IoTConnect CPID and Environment information.
+  * **avr-iot-sample.ino.hex:** Sample firmware. This is the actual sample code which should be loaded only after the board has been provisioned.
 * Connect the board to your PC using a USB A to USB C cable.
 * A new virtual drive will appear in your Windows Explorer.
-* Drag and drop or copy-paste the appropriate file into the new drive in order to load the firmware for each of the two sections below.
+* Follow the provsioning steps in the section below.
 
 ## Provisioning
 
 * Install a serial console application, such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
 * Open the serial console application and establish a connection to the board in order to see the provisioning output.
-* Load the Provisioning firmware image avr-iot-provision.ino.hex.
-* Once the board boots, you should see an output similar to this in the serial console:
+* Load the **Provisioning Firmware** (avr-iot-provision.ino.hex) onto the board by copying it into the root of the Virtual Drive that was created in the previous section.
+* After the copy is complete, remove power from the board and reapply after 5 seconds.
+* Once the board boots, verify there is output in the serial console that looks similar to the example below.
 
 ```
 [INFO] Starting the provisioning sample...
