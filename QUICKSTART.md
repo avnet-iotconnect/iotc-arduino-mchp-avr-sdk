@@ -56,7 +56,7 @@ AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
 ```
-* Use the console to set the values for CPID and ENV which were obtained from the IoTConnect Web GUI in a previous step.
+* Use the console to set the values for **CPID** and **ENV** which were obtained from the IoTConnect Web GUI in a previous step.
 * The DUID value should be left unset. A DUID unique to your device will be generated and displayed on the console during startup.
 * Obtain the fingerprint of the device certificate that is displayed on the screen.
 This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
