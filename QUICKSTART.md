@@ -19,7 +19,7 @@ then you should refer to the [Developer Guide](README.md)
 
 ## IoTConnect Firmware Loading
 
-* Download and extract the firmware at [this URL](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-dev-062623.zip)
+* Download and extract the firmware at [this URL](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)
 * The package will contain two files:
   * avr-iot-provision.ino.hex: Provisioning firmware. You need to run this firmware once, so that it can configure the board.
   * avr-iot-sample.ino.hex: Sample firmware. You need to run this firmware once, so that it can configure the board.
