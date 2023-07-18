@@ -9,6 +9,9 @@
 #include <Arduino.h>
 #include "log.h"
 #include "lte.h"
+#include "mcp9808.h"
+#include "mqtt_client.h"
+#include "veml3328.h"
 #include "IoTConnectSDK.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
@@ -117,6 +120,11 @@ static void publish_telemetry() {
     iotcl_telemetry_add_with_iso_time(msg, iotcl_iso_timestamp_now());
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
     iotcl_telemetry_set_number(msg, "random", rand() % 100);
+    iotcl_telemetry_set_number(msg, "temperature", Mcp9808.readTempC());
+    iotcl_telemetry_set_number(msg, "light.red", Veml3328.getRed());
+    iotcl_telemetry_set_number(msg, "light.green", Veml3328.getGreen());
+    iotcl_telemetry_set_number(msg, "light.blue", Veml3328.getBlue());
+    iotcl_telemetry_set_number(msg, "light.ir", Veml3328.getIR());
 
     const char *str = iotcl_create_serialized_string(msg, false);
     iotcl_telemetry_destroy(msg);
@@ -199,6 +207,13 @@ void demo_setup(void)
   Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);
   delay(2000);
 
+  if (Mcp9808.begin()) {
+      Log.error(F("Could not initialize the temperature sensor"));
+  }
+  if (Veml3328.begin()) {
+      Log.error(F("Could not initialize the light sensor"));
+  }
+
   // memory_test();
   // reserve_stack_with_heap_leak(); // we may need to do this early to prevent corruption
   // memory_test();
@@ -230,7 +245,6 @@ void demo_setup(void)
 
     config->duid = aws_id_buff;
   }
-
   Log.infof("CPID: %s\r\n", config->cpid);
   Log.infof("ENV : %s\r\n", config->env);
   Log.infof("DUID: %s\r\n", config->duid);
