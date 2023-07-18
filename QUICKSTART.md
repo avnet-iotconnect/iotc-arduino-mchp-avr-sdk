@@ -16,7 +16,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 ## Cloud Account Setup
 An IoTConnect account is required to continue this guide. If you need to create an account, a free 2-month subscription is available.  Please follow the [Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md) guide and return to this guide once complete.
-* The IoTConnect CPID and Environment values will be required when provisioning the board. These values can be located in the IoTConnect WebUI on the Key Vault page. Copy these values for future use.
+* The IoTConnect **CPID** and **Environment** values will be required when provisioning the board. These values can be located in the IoTConnect WebUI on the Key Vault page. Copy these values for future use.
 
 ## IoTConnect Firmware
 ***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
