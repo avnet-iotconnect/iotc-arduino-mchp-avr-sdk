@@ -1,14 +1,14 @@
 ## Introduction
 This QuickStart Guide will enable rapid evaluation of the Avnet IoTConnect platform using the C SDK on the Microchip AVR IoT Cellular Mini Kit.  This can also be used for other similar AVR Arduino boards.
 
-For developing software leveraging the IoTConnect C SDK refer to the [Developer Guide](README.md)
+For developing software leveraging the IoTConnect C SDK refer to the [Developer Guide](README.md).
 
 ## SIM Card Activation
 
-* Your board package should contain a Truphone SIM. Follow these steps to activate it:
-  * Create an account or log in at the [Truphone Sign up page](https://account.truphone.com/register)
-  * Activate your SIM from your account's dashboard page and following the steps outlined in the activation process. 
-    See the screenshot below:
+* The AVR-IoT Cell Mini Kit contains a Truphone SIM. Follow the steps below to create am account and activate it.
+  * Create an account or log in with an existing account at the [Truphone Sign-up page](https://account.truphone.com/register).
+  * Activate the SIM from the account dashboard page by following the steps outlined in the activation process. 
+    See the screenshot below for reference:
 
 ![Truphone Activation](media/truphone-activate-sim.png "Truphone Activation")
 
