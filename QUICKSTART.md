@@ -1,10 +1,7 @@
 ## Introduction
-This is a QuickStart Guide for IoTConnect C SDK for Microchip AVR Arduino boards like AVR IoT Cellular Mini
+This QuickStart Guide will enable rapid evaluation of the Avnet IoTConnect platform using the C SDK on the Microchip AVR IoT Cellular Mini Kit.  This can also be used for other similar AVR Arduino boards.
 
-This guide is for those interested in evaluating and testing this board with IoTConnect.
-
-If you are interested in developing software with our IoTConnect C SDK, 
-then refer to the [Developer Guide](README.md)
+For developing software leveraging the IoTConnect C SDK refer to the [Developer Guide](README.md)
 
 ## SIM Card Activation
 
