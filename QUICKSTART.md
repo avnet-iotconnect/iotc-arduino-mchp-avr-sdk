@@ -68,20 +68,20 @@ This can be done with openssl command line or [this web site](https://www.samlto
 
 ```
 [INFO] Starting the Sample Application 01.00.00
-[INFO] CPID: avtds
-[INFO] Env : Avnet
+[INFO] CPID: [your CPID]
+[INFO] Env : [your Env]
 [INFO] DUID: avr-092ee282bb58cf55f34c66e3d3c
 [INFO] Connecting to operator......... OK!
 [INFO] +CCLK: "23/6/26,13:22:7-20"
-[INFO] CPID: avtd***
-[INFO] ENV:  Avnet
+[INFO] CPID: [your CPID]
+[INFO] ENV:  [your Env]
 [INFO] Attempting to connect to MQTT host:poc-iotconnect-iothub-030-eu2.azure-de
 vices.net, client id:avtds-avr-092ee282bb58cf55f34c66e3d3c, username: poc-iotcon
 nect-iothub-030-eu2.azure-devices.net/avtds-avr-092ee282bb58cf55f34c66e3d3c/?api
 -version=2018-06-30
 [INFO] IoTConnect Client Connected
-[INFO] Sending: {"cpid":"avtds","dtg":"620c9902-17dd-46b0-a8a2-b20f77eed493","mt
-":0,"sdk":{"l":"M_C","v":"2.0","e":"Avnet"},"d":[{"id":"avr-092ee282bb58cf55f34c
+[INFO] Sending: {"cpid":"****","dtg":"620c9902-17dd-46b0-a8a2-b20f77eed493","mt
+":0,"sdk":{"l":"M_C","v":"2.0","e":"***"},"d":[{"id":"avr-092ee282bb58cf55f34c
 66e3d3c","tg":"","d":[{"version":"01.00.00","cpu":3.1229999}],"dt":"2023-05-16T1
 7:16:40.000Z"}],"t":"2023-05-16T17:16:40.000Z"}
 ```
