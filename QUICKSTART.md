@@ -56,12 +56,9 @@ AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
 ```
-* Use the console at this point to provision your code with information found in your account:
-  * CPID
-  * Environment
-* You may choose to enter a blank Device Unique ID (DUID), and in that case the default 
-auto-generated ID, unique for each board will user. This ID will be printed on the screen.
-* Obtain the fingerprint of the device certificate that is displayed on the screen above.
+* Use the console to set the values for CPID and ENV which were obtained from the IoTConnect Web GUI in a previous step.
+* The DUID value should be left unset. A DUID unique to your device will be generated and displayed on the console during startup.
+* Obtain the fingerprint of the device certificate that is displayed on the screen.
 This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
 * Note the **fingerprint** and the **Device ID** value and use it in the next steps.
 
