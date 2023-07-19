@@ -8,6 +8,7 @@
 #define IOTC_MQTT_CLIENT_H
 
 #include <Arduino.h>
+#include "iotconnect_lib.h"
 #include "iotconnect_discovery.h"
 #include "IoTConnectSDK.h"
 

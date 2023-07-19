@@ -1,6 +1,6 @@
 //
-// Copyright: Avnet 2021
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 6/28/21.
+// Copyright: Avnet 2023
+// Created by Nik Markovic <nikola.markovic@avnet.com> on 4/5/23.
 //
 
 #include <stdlib.h>
@@ -17,7 +17,7 @@ int iotconnect_https_request(
 ) {
     response->data = NULL;
     if (!HttpClient.configure(host, 443, true)) {
-        Log.error("Failed to configure https client");
+        Log.error(F("Failed to configure https client"));
         return -1;
     }
 
@@ -44,11 +44,18 @@ int iotconnect_https_request(
     if (200 != http_rsp.status_code) {
         Log.warnf("Unexpected HTTP response status code %u\r\n", http_rsp.status_code);
     }
+
+    size_t data_size = 1000;
+    if (http_rsp.data_size) {
+        data_size = http_rsp.data_size + 16;     // Add some extra bytes for termination
+        Log.infof("-------- Reported data size is %u\r\n", http_rsp.data_size);
+    }
+
     // Responses should not be
-    String body = HttpClient.readBody(1000);
+    String body = HttpClient.readBody(data_size);
     size_t body_length = body.length();
     if (0 == body_length) {
-        Log.error("Http response was empty");
+        Log.error(F("Http response was empty"));
         return -1;
     }
     response->data = (char *) malloc(body_length + 1);
