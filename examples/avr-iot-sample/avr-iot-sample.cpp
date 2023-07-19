@@ -11,19 +11,30 @@
 #include "lte.h"
 #include "mcp9808.h"
 #include "mqtt_client.h"
+#include "led_ctrl.h"
 #include "veml3328.h"
 #include "IoTConnectSDK.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
 
-#define APP_VERSION "01.01.00"
+#define APP_VERSION "01.02.00"
 
 #define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
 #define GENERATED_ID_PREFIX "avr-"
 #define DUID_WEB_UI_MAX_LEN 31
 
 static char aws_id_buff[AWS_ID_BUFF_SIZE];
-static bool connecteded_to_network = false;
+static bool connected_to_network = false;
+static bool button_pressed = false;
+static int button_press_count = 0;
+
+static void pd2_button_interrupt(void) {
+    if (PORTD.INTFLAGS & PIN2_bm) {
+        PORTD.INTFLAGS = PIN2_bm;
+        button_pressed = true;
+        button_press_count++;
+    }
+}
 
 static void on_connection_status(IotConnectConnectionStatus status) {
     // Add your own status handling
@@ -51,8 +62,25 @@ static void command_status(IotclEventData data, bool status, const char *command
 static void on_command(IotclEventData data) {
     char *command = iotcl_clone_command(data);
     if (NULL != command) {
+        if(NULL != strstr(command, "led-user") ) {
+            if (NULL != strstr(command, "on")) {
+              LedCtrl.on(Led::USER);
+            } else {
+              LedCtrl.off(Led::USER);
+            }
+            command_status(data, true, command, "OK");
+        } else if(NULL != strstr(command, "led-error") ) {
+            if (NULL != strstr(command, "on")) {
+              LedCtrl.on(Led::ERROR);
+            } else {
+              LedCtrl.off(Led::ERROR);
+            }
+            command_status(data, true, command, "OK");
+        } else {
+            printf("Unknown command:%s\r\n", command);
+            command_status(data, false, command, "Not implemented");
+        }
         free((void *) command);
-        command_status(data, false, "?", "Not implemented");
     } else {
         command_status(data, false, "?", "Internal error");
     }
@@ -125,6 +153,7 @@ static void publish_telemetry() {
     iotcl_telemetry_set_number(msg, "light.green", Veml3328.getGreen());
     iotcl_telemetry_set_number(msg, "light.blue", Veml3328.getBlue());
     iotcl_telemetry_set_number(msg, "light.ir", Veml3328.getIR());
+    iotcl_telemetry_set_number(msg, "button_counter", button_press_count);
 
     const char *str = iotcl_create_serialized_string(msg, false);
     iotcl_telemetry_destroy(msg);
@@ -134,7 +163,7 @@ static void publish_telemetry() {
 }
 
 static void on_lte_disconnect(void) {
-  connecteded_to_network = false;
+  connected_to_network = false;
 }
 
 static bool connect_lte() {
@@ -204,8 +233,12 @@ void reserve_stack_with_heap_leak() {
 void demo_setup(void)
 {
   Log.begin(115200);
-  Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);
   delay(2000);
+
+  Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);
+
+  LedCtrl.begin();
+  LedCtrl.startupCycle();
 
   if (Mcp9808.begin()) {
       Log.error(F("Could not initialize the temperature sensor"));
@@ -214,9 +247,9 @@ void demo_setup(void)
       Log.error(F("Could not initialize the light sensor"));
   }
 
-  // memory_test();
-  // reserve_stack_with_heap_leak(); // we may need to do this early to prevent corruption
-  // memory_test();
+  // Set PD2 as input (button)
+  pinConfigure(PIN_PD2, PIN_DIR_INPUT | PIN_PULLUP_ON);
+  attachInterrupt(PIN_PD2, pd2_button_interrupt, FALLING);
 
   if (ATCA_SUCCESS != iotc_ecc608_init_provision()) {
     Log.error("Failed to read provisioning data!");
@@ -252,7 +285,7 @@ void demo_setup(void)
   if (!connect_lte()) {
       return;
   }
-  connecteded_to_network = true;
+  connected_to_network = true;
 
   config->ota_cb = on_ota;
   config->status_cb = on_connection_status;
@@ -260,16 +293,30 @@ void demo_setup(void)
 
   if (iotconnect_sdk_init()) {
     Lte.onDisconnect(on_lte_disconnect);
-    for (int i = 0; i < 20; i++) {
-      if (!connecteded_to_network || !iotconnect_sdk_is_connected()) {
-        // not connected, but mqtt should try to reconnect
+
+    // MAIN TELEMETRY LOOP - X messages
+    for (int i = 0; i < 50; i++) {
+      if (!connected_to_network || !iotconnect_sdk_is_connected()) {
         break;
       }
       publish_telemetry(); // publish as soon as we detect that button stat changed
-      // pause 5 second and "loop" frequently to read incoming mesages
-      for (int j = 0; j < 50; j++) {
-        iotconnect_sdk_loop();
-        delay(100);
+
+      // DELAY / SDK POLL LOOP - X iteratins of SDK loop 2-second delays
+      // note that iotconnect_sdk_loop() takes 2 seconds to complete, so there's no real need for delay()
+      for (int j = 0; j < 30; j++) {
+        if (!connected_to_network || !iotconnect_sdk_is_connected()) {
+          break;
+        }
+       iotconnect_sdk_loop(); // loop will take 2 seconds to complete (related to the modem polling most likely)
+        if (button_pressed) {
+          button_pressed = false;
+          LedCtrl.startupCycle(); // first publish once then flicker leds
+          // BURST LOOP send messages in quick succession?
+          for (int burst_count = 0; burst_count < 20; burst_count++) {
+            publish_telemetry(); // publish as soon as we detect that button stat changed
+            iotconnect_sdk_loop(); // loop will take 2 seconds to complete (related to the modem polling most likely)
+          }
+        }
       }
     }
   } else {
