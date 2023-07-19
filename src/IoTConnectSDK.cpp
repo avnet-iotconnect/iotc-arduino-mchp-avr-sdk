@@ -21,7 +21,7 @@ static IotConnectClientConfig config = {0};
 static IotConnectMqttClientConfig mqtt_config = {0};
 
 static void dump_response(const char *message, IotConnectHttpResponse *response) {
-    Log.infof("%s", message);
+    Log.infof("%s:\r\n", message);
     if (response->data) {
         Log.infof(" Response was:\r\n----\r\n%s\r\n----\r\n", response->data);
     } else {
@@ -91,16 +91,16 @@ static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *
     free(path_buff);
 
     if (NULL == response.data) {
-        dump_response("Unable to parse HTTP response,", &response);
+        dump_response("Unable to parse HTTP response", &response);
         goto cleanup;
     }
     json_start = strstr(response.data, "{");
     if (NULL == json_start) {
-        dump_response("No json response from server.", &response);
+        dump_response("No json response from server", &response);
         goto cleanup;
     }
     if (json_start != response.data) {
-        dump_response("WARN: Expected JSON to start immediately in the returned data.", &response);
+        dump_response("WARN: Expected JSON to start immediately in the returned data", &response);
     }
 
     ret = iotcl_discovery_parse_discovery_response(json_start);
@@ -149,16 +149,16 @@ static IotclSyncResponse *run_http_sync(IotclDiscoveryResponse* dr, const char *
     free(post_data);
 
     if (NULL == response.data) {
-        dump_response("Unable to parse HTTP response.", &response);
+        dump_response("Unable to parse HTTP response", &response);
         goto cleanup;
     }
     json_start = strstr(response.data, "{");
     if (NULL == json_start) {
-        dump_response("No json response from server.", &response);
+        dump_response("No json response from server", &response);
         goto cleanup;
     }
     if (json_start != response.data) {
-        dump_response("WARN: Expected JSON to start immediately in the returned data.", &response);
+        dump_response("WARN: Expected JSON to start immediately in the returned data", &response);
     }
 
     ret = iotcl_discovery_parse_sync_response(json_start);
@@ -237,11 +237,16 @@ bool iotconnect_sdk_init(void) {
         iotcl_discovery_free_sync_response(mqtt_config.sr);
         mqtt_config.sr = NULL;
     }
+
     IotclDiscoveryResponse *discovery_response = run_http_discovery(config.cpid, config.env);
+    if (NULL == discovery_response) {
+        // run_http_discovery will print the error
+        return false;
+    }
     IotclSyncResponse *sr = run_http_sync(discovery_response, config.cpid, config.duid);
     iotcl_discovery_free_discovery_response(discovery_response); // we no longer need it
     if (NULL == sr) {
-        // Sync_call will print the error
+        // run_http_sync will print the error
         return false;
     }
     mqtt_config.sr = sr;
