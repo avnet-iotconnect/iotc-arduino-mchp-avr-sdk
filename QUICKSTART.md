@@ -5,7 +5,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 ## SIM Card Activation
 
-* The AVR-IoT Cell Mini Kit contains a Truphone SIM. Follow the steps below to create am account and activate it.
+* The AVR-IoT Cell Mini Kit contains a Truphone SIM. Follow the steps below to create an account and activate it.
   * Create an account or log in with an existing account at the [Truphone Sign-up page](https://account.truphone.com/register).
   * Activate the SIM from the account dashboard page by following the steps outlined in the activation process. 
     See the screenshot below for reference:
@@ -14,7 +14,11 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
 
 * Install the SIM into board by sliding the notched-corner end of the SIM in with the Truphone logo facing outwards.
 
-## IoTConnect Firmware Loading
+## Cloud Account Setup
+An IoTConnect account is required to continue this guide. If you need to create an account, a free 2-month subscription is available.  Please follow the [Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md) guide and return to this guide once complete.
+* The IoTConnect **CPID** and **Environment** values will be required when provisioning the board. These values can be located in the IoTConnect WebUI on the Key Vault page. Copy these values for future use.
+
+## IoTConnect Firmware
 ***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
 
 * Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)).
@@ -23,10 +27,7 @@ For developing software leveraging the IoTConnect C SDK refer to the [Developer 
   * **avr-iot-sample.ino.hex:** Sample firmware. This is the actual sample code which should be loaded only after the board has been provisioned.
 * Connect the board to your PC using a USB A to USB C cable.
 * A new virtual drive will appear in your Windows Explorer.
-* Follow the provsioning steps in the section below.
-
-## Cloud Account Setup
-An IoTConnect account is required to continue this guide. If you need to create an account, a free 2-month subscription is available.  Please follow the [Creating a New IoTConnect Account](https://github.com/avnet-iotconnect/avnet-iotconnect.github.io/blob/main/documentation/iotconnect/subscription/subscription.md) guide and return to this guide once complete.
+* Follow the provisioning steps in the section below.
 
 ## Provisioning
 
@@ -55,12 +56,9 @@ AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
 ```
-* Use the console at this point to provision your code with information found in your account:
-  * CPID
-  * Environment
-* You may choose to enter a blank Device Unique ID (DUID), and in that case the default 
-auto-generated ID, unique for each board will user. This ID will be printed on the screen.
-* Obtain the fingerprint of the device certificate that is displayed on the screen above.
+* Use the console to set the values for **CPID** and **ENV** which were obtained from the IoTConnect Web GUI in a previous step.
+* The DUID value should be left unset. A DUID unique to your device will be generated and displayed on the console during startup.
+* Obtain the fingerprint of the device certificate that is displayed on the screen.
 This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
 * Note the **fingerprint** and the **Device ID** value and use it in the next steps.
 
