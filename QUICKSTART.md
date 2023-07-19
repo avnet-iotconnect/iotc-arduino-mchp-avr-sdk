@@ -21,7 +21,7 @@ An IoTConnect account is required to continue this guide. If you need to create 
 ## IoTConnect Firmware
 ***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
 
-* Download and extract the pre-compiled firmware ([avr-iot-071723.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071723.zip)).
+* Download and extract the pre-compiled firmware ([avr-iot-071923.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071923.zip)).
 * The package contains two files:
   * **avr-iot-provision.ino.hex:** Provisioning firmware. This will need to be loaded and run once to provision the board with the IoTConnect CPID and Environment information.
   * **avr-iot-sample.ino.hex:** Sample firmware. This is the actual sample code which should be loaded only after the board has been provisioned.
