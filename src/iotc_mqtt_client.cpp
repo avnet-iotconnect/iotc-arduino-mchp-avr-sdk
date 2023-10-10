@@ -14,6 +14,7 @@
 #include "iotc_mqtt_client.h"
 
 #define MQTT_SECURE_PORT 8883
+#define MQTT_SUB_TOPIC_FORMAT "devices/%s/messages/devicebound/%%24.to=%%2Fdevices%%2F%s%%2Fmessages%%2FdeviceBound"
 
 static bool disconnect_received = false;
 static IotConnectMqttClientConfig* c = NULL;
@@ -129,6 +130,15 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         Log.rawf(F("."));
         delay(500);
     }
+    // NOTE: WORKAROUND FOR THE SUB TOPIC
+    free(c->sr->broker.sub_topic);
+    c->sr->broker.sub_topic = (char *) malloc(strlen(MQTT_SUB_TOPIC_FORMAT) + 2 * strlen(c->sr->broker.client_id) + 10 /* slack */ );
+    if (!c->sr->broker.sub_topic) {
+        Log.error(F("ERROR: Unable to allocate memory for the sub topic!"));
+        MqttClient.end();
+        return false;
+    }
+    sprintf(c->sr->broker.sub_topic, MQTT_SUB_TOPIC_FORMAT, c->sr->broker.client_id, c->sr->broker.client_id);
     if(!MqttClient.subscribe(c->sr->broker.sub_topic)) {
         Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!"), c->sr->broker.sub_topic);
         return false;
