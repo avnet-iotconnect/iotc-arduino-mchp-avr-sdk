@@ -212,6 +212,30 @@ static ATCA_STATUS load_ecc608_cache(void) {
     return ATCA_SUCCESS;
 }
 
+ATCA_STATUS iotc_ecc608_get_serial_as_string(char* serial_str) {
+    ATCA_STATUS status;
+    uint8_t serial_buffer[ATCA_SERIAL_NUM_SIZE];
+
+    status = atcab_init(&cfg_atecc608b_i2c);
+    if (status != ATCA_SUCCESS) {
+        printf("atcab_init() failed: %02x\r\n", status);
+        return status;
+    }
+
+    status = atcab_read_serial_number(serial_buffer);
+    if (status != ATCA_SUCCESS) {
+        printf("atcab_read_serial_number() failed: %02x\r\n", status);
+        return status;
+    }
+
+    for (int i = 0; i < ATCA_SERIAL_NUM_SIZE; i++) {
+        sprintf(&serial_str[i * 2], "%02X", serial_buffer[i]);
+    }
+    serial_str[ATCA_SERIAL_NUM_SIZE * 2] = 0;
+
+    return ATCA_SUCCESS;
+}
+
 // for debugging purposes
 void iotc_ecc608_dump_provision_data(void) {
     DataHeaderUnion* h = (DataHeaderUnion *) data_cache;

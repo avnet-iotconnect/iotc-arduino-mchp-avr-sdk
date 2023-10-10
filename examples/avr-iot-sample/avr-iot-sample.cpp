@@ -1,4 +1,3 @@
-//
 // Copyright: Avnet, Softweb Inc. 2023
 // Created by Nik Markovic <nikola.markovic@avnet.com> on 3/17/23.
 //
@@ -17,13 +16,13 @@
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
 
-#define APP_VERSION "02.00.00"
+#define APP_VERSION "01.02.00"
 
-#define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
-#define GENERATED_ID_PREFIX "avr-"
-#define DUID_WEB_UI_MAX_LEN 31
+#define GENERATED_ID_PREFIX "sn"
 
-static char aws_id_buff[AWS_ID_BUFF_SIZE];
+static char duid_from_serial_buf[sizeof(GENERATED_ID_PREFIX) + ATCA_SERIAL_NUM_SIZE * 2];
+
+
 static bool connected_to_network = false;
 static bool button_pressed = false;
 static int button_press_count = 0;
@@ -233,7 +232,7 @@ void reserve_stack_with_heap_leak() {
 void demo_setup(void)
 {
   Log.begin(115200);
-  Log.setLogLevel(LogLevel::DEBUG);
+  Log.setLogLevel(LogLevel::INFO);
   delay(2000);
 
   Log.infof(F("Starting the Sample Application %s\r\n"), APP_VERSION);
@@ -268,16 +267,12 @@ void demo_setup(void)
   }
 
   if (!config->duid || 0 == strlen(config->duid)) {
-    strcpy(aws_id_buff, GENERATED_ID_PREFIX);
-    char* bufer_location = &aws_id_buff[strlen(GENERATED_ID_PREFIX)];
-    size_t buffer_size = AWS_ID_BUFF_SIZE - strlen(GENERATED_ID_PREFIX);
-    if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, bufer_location, buffer_size)) {
+    strcpy(duid_from_serial_buf, GENERATED_ID_PREFIX);
+    if (ATCA_SUCCESS != iotc_ecc608_get_serial_as_string(&duid_from_serial_buf[strlen(GENERATED_ID_PREFIX)])) {
       return; // caller will print the error
     }
-    // terminate for max length
-    aws_id_buff[DUID_WEB_UI_MAX_LEN] = 0;
 
-    config->duid = aws_id_buff;
+    config->duid = duid_from_serial_buf;
   }
   Log.infof(F("CPID: %s\r\n"), config->cpid);
   Log.infof(F("ENV : %s\r\n"), config->env);
