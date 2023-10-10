@@ -41,6 +41,8 @@
 #define MQTT_PRIVATE_KEY_SLOT (0)
 
 // NOTE the special modem-compatible format for certificates
+// It may be possible to convert these strings to flash strings with
+// the F() macro in the future if needed.
 #define CERT_GODADDY_ROOT_CA_G2 \
 "\n-----BEGIN CERTIFICATE-----\n"\
 "MIIDxTCCAq2gAwIBAgIBADANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx"\
@@ -67,6 +69,8 @@
 "\n-----END CERTIFICATE-----"
 
 // NOTE the special modem-compatible format for certificates
+// It may be possible to convert these strings to flash strings with
+// the F() macro in the future if needed.
 #define CERT_DIGICERT_GLOBAL_ROOT_G2_ROOT_CA \
 "\n-----BEGIN CERTIFICATE-----\n"\
 "MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh"\
@@ -106,11 +110,11 @@ static bool write_ca_server_certificate(const char* data, const uint8_t slot) {
 
     SequansController.writeBytes((uint8_t*)command, strlen(command), true);
     SequansController.waitForByte('>', 1000);
-    SequansController.writeBytes((uint8_t*)data, data_length, true);
+    SequansController.writeBytes((const uint8_t*)data, data_length, true);
 
     ResponseResult res = SequansController.readResponse(rbuff, sizeof(rbuff));
     if (res != ResponseResult::OK) {
-        Log.errorf("Write certificate error: %d. Response: \"%s\"\r\n", res, rbuff);
+        Log.errorf(F("Write certificate error: %d. Response: \"%s\"\r\n"), res, rbuff);
         return false;
     }
 
@@ -208,13 +212,13 @@ static void print_certificate(uint8_t* certificate, uint16_t size) {
       atcab_base64encode(certificate, size, buffer, &buffer_size);
 
   if (result != ATCA_SUCCESS) {
-      Log.errorf("Failed to encode into base64: %x\r\n", result);
+      Log.errorf(F("Failed to encode into base64: %x\r\n"), result);
       return;
   }
 
   buffer[buffer_size] = 0;
   Log.rawf(
-      "-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n",
+      F("-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n"),
       buffer
   );
 }
@@ -230,14 +234,13 @@ bool print_device_certificate() {
     &device_certificate_size_max
   );
   if (atca_cert_status != ATCACERT_E_SUCCESS) {
-    Log.errorf("Failed to get device certificate's max size, status code: "
-      "0x%x\r\n",
+    Log.errorf(F("Failed to get device certificate's max size, status code: 0x%x\r\n"),
       atca_cert_status
-      );
+    );
     return false;
   }
   if (device_certificate_size_max > certificate_buffer_size) {
-    Log.errorf("ERROR: Device certificate is %lu bytes in size, but the buffer is only  %lu bytes.\r\n",
+    Log.errorf(F("ERROR: Device certificate is %lu bytes in size, but the buffer is only  %lu bytes.\r\n"),
       device_certificate_size_max,
       certificate_buffer_size
     );
@@ -249,10 +252,10 @@ bool print_device_certificate() {
       &device_certificate_size
   );
   if (atca_cert_status != ATCACERT_E_SUCCESS) {
-      Log.errorf("Failed to get device certificate, status code: "
-                  "0x%X\r\n",
-                  atca_cert_status);
-      return false;
+    Log.errorf(F("Failed to get device certificate, status code: 0x%X\r\n"),
+      atca_cert_status
+    );
+    return false;
   }
   print_certificate(certificate_buffer, device_certificate_size);
   return true;

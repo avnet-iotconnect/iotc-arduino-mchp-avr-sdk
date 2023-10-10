@@ -23,10 +23,10 @@ int iotconnect_https_request(
 
     HttpResponse http_rsp;
     if (!send_str || 0 == strlen(send_str)) {
-        Log.debugf("get: %s %s\r\n", host, path);
+        Log.debugf(F("get: %s %s\r\n"), host, path);
         http_rsp = HttpClient.get(path);
     } else {
-        Log.debugf("post: %s %s >>%s<<\r\n", host, path, send_str);
+        Log.debugf(F("post: %s %s >>%s<<\r\n"), host, path, send_str);
         http_rsp = HttpClient.post(
             path,
             send_str,
@@ -37,18 +37,18 @@ int iotconnect_https_request(
     }
 
     if (0 == http_rsp.status_code) {
-        Log.errorf("Unable to get response from the server for URL https://%s%s\r\n", host, path);
+        Log.errorf(F("Unable to get response from the server for URL https://%s%s\r\n"), host, path);
         return -1;
     }
 
     if (200 != http_rsp.status_code) {
-        Log.warnf("Unexpected HTTP response status code %u\r\n", http_rsp.status_code);
+        Log.warnf(F("Unexpected HTTP response status code %u\r\n"), http_rsp.status_code);
     }
 
     size_t data_size = 1000;
     if (http_rsp.data_size) {
         data_size = http_rsp.data_size + 16;     // Add some extra bytes for termination
-        Log.infof("-------- Reported data size is %u\r\n", http_rsp.data_size);
+        Log.infof(F("-------- Reported data size is %u\r\n"), http_rsp.data_size);
     }
 
     // Responses should not be

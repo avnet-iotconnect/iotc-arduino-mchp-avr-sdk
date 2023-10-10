@@ -23,9 +23,9 @@ static IotConnectMqttClientConfig mqtt_config = {0};
 static void dump_response(const char *message, IotConnectHttpResponse *response) {
     Log.infof("%s:\r\n", message);
     if (response->data) {
-        Log.infof(" Response was:\r\n----\r\n%s\r\n----\r\n", response->data);
+        Log.infof(F(" Response was:\r\n----\r\n%s\r\n----\r\n"), response->data);
     } else {
-        Log.infof(" Response was empty\r\n");
+        Log.infof(F(" Response was empty\r\n"));
     }
 }
 
@@ -66,7 +66,7 @@ static void report_sync_error(IotclSyncResponse *response, const char *sync_resp
             Log.warn(F("WARN: report_sync_error called, but no error returned?"));
             break;
     }
-    Log.errorf("Raw server response was:\r\n--------------\r\n%s\r\n--------------\r\n", sync_response_str);
+    Log.errorf(F("Raw server response was:\r\n--------------\r\n%s\r\n--------------\r\n"), sync_response_str);
 }
 
 static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *env) {
@@ -105,8 +105,8 @@ static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *
 
     ret = iotcl_discovery_parse_discovery_response(json_start);
     if (!ret) {
-        Log.errorf("Error: Unable to get discovery response for environment \"%s\"."
-            "Please check the environment name in the key vault.\r\n",
+        Log.errorf(F("Error: Unable to get discovery response for environment \"%s\"."
+            "Please check the environment name in the key vault.\r\n"),
             env
         );
     }
@@ -176,7 +176,7 @@ static IotclSyncResponse *run_http_sync(IotclDiscoveryResponse* dr, const char *
 }
 
 static void on_mqtt_c2d_message(const char* message) {
-    Log.infof("event>>> %s", message);
+    Log.infof(F("event>>> %s"), message);
     if (!iotcl_process_event(message)) {
         Log.error(F("Error encountered while processing the message"));
     }
@@ -270,8 +270,8 @@ bool iotconnect_sdk_init(void) {
     char cpid_buff[5];
     strncpy(cpid_buff, config.cpid, 4);
     cpid_buff[4] = 0;
-    Log.infof("CPID: %s***\r\n", cpid_buff);
-    Log.infof("ENV:  %s\r\n", config.env);
+    Log.infof(F("CPID: %s***\r\n"), cpid_buff);
+    Log.infof(F("ENV:  %s\r\n"), config.env);
 
     if (!iotcl_init(&lib_config)) {
         Log.error(F("Error: Failed to initialize the IoTConnect Lib"));

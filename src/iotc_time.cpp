@@ -33,25 +33,25 @@ static time_t parse_time_from_response(String* resp) {
 
 static time_t do_http_get_time(void) {
     if (!HttpClient.configure(TIMEZONE_URL, 80, false)) {
-        Log.errorf("http_get_time: Failed to configure HTTP for the domain %s. Is the network up?\r\n",
+        Log.errorf(F("http_get_time: Failed to configure HTTP for the domain %s. Is the network up?\r\n"),
                    TIMEZONE_URL);
         return 0;
     }
     HttpResponse response = HttpClient.get(TIMEZONE_URI);
     if (response.status_code != HttpClient.STATUS_OK) {
-        Log.errorf("http_get_time: GET request on %s%s failed. Got status code %d\r\n",
+        Log.errorf(F("http_get_time: GET request on %s%s failed. Got status code %d\r\n"),
                    TIMEZONE_URL,
                    TIMEZONE_URI,
                    response.status_code);
         return 0;
     }
 
-/*
+#if 0
     Log.infof(
         "Successfully performed GET request. Status Code = %d, Size = %d\r\n",
         response.status_code,
         response.data_size);
-*/
+#endif
     String body = HttpClient.readBody(512);
 
     if (body == "") {
@@ -94,7 +94,7 @@ static time_t cclk_response_to_time_t(const char* time_str)
 
     int num = sscanf(time_str, "\r\n+CCLK: \"%d/%d/%d,%d:%d:%d%c%d\"\r\n", &yy, &mon, &day, &hh, &mm, &ss, &tz_sign, &tzo);
     if (num != 8)  { // need to match 8 items &yy, &mon, &day etc.
-        Log.errorf("Unable to parse modem time %s", time_str);
+        Log.errorf(F("Unable to parse modem time %s"), time_str);
         return 0;
     }
 
@@ -111,7 +111,7 @@ static time_t cclk_response_to_time_t(const char* time_str)
     now_tm.tm_mday = day;
     now_time_t = mktime(&now_tm);
 
-    Log.infof("+CCLK: \"%d/%d/%d,%d:%d:%d%c%d\"\r\n", yy, mon, day, hh, mm, ss, tz_sign, tzo);
+    Log.infof(F("+CCLK: \"%d/%d/%d,%d:%d:%d%c%d\"\r\n"), yy, mon, day, hh, mm, ss, tz_sign, tzo);
 
     // tz offset is quarter of an hour from gmt. 15 minutes have 900 seconds
     // To get GMT time, we need to subtract (not add) the signed offset
@@ -144,7 +144,7 @@ time_t iotc_get_time_modem(void) {
             Log.error(F("Failed to retrieve time from the modem"));
             return 0;
     }
-    Log.debugf("Time AT response: >>%s<<\r\n", response_buffer);
+    Log.debugf(F("Time AT response: >>%s<<\r\n"), response_buffer);
 
     time_t now = cclk_response_to_time_t(response_buffer);
     if (0 == now) {

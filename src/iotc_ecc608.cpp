@@ -169,7 +169,7 @@ static ATCA_STATUS load_ecc608_cache(void) {
         &slot_size
     );
     if (ATCA_SUCCESS != atca_status)  {
-        Log.errorf("IOTC_ECC608: Unable to read zone size: %d\r\n", atca_status);
+        Log.errorf(F("IOTC_ECC608: Unable to read zone size: %d\r\n"), atca_status);
         return atca_status;
     }
 
@@ -227,7 +227,7 @@ void iotc_ecc608_dump_provision_data(void) {
         }
 
         Log.infof(
-            "Type:%d, size:%u, next:%u %s\r\n",
+            F("Type:%d, size:%u, next:%u %s\r\n"),
             h->header.type,
             ecchdr_get_data_size(h),
             h->header.next,
@@ -321,12 +321,13 @@ ATCA_STATUS iotc_ecc608_write_all_data(void) {
         IOTC_DATA_SLOT_SIZE // we already checked that the actual size matches
     );
     if (ATCA_SUCCESS != atca_status) {
-        Log.errorf("Failed to write provisioning data! Error %d\r\n", atca_status);
+        Log.errorf(F("Failed to write provisioning data! Error %d\r\n"), atca_status);
         return atca_status;
     }
     return ATCA_SUCCESS;
 }
 
+#if 0
 // Keeping this function for reference only. It shows some usage examples.
 void iotc_ecc608_unit_test (void){
     iotc_ecc608_init_provision();
@@ -370,3 +371,4 @@ void iotc_ecc608_unit_test (void){
 
     //iotc_ecc608_write_all_data();
 }
+#endif
