@@ -23,18 +23,23 @@ such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
 * Follow the
  [AVR-IoT Cellular Mini UserGuide's Development Environment Section](https://iot.microchip.com/docs/arduino/introduction/devenv) 
 to set up and prepare your Arduino development environment.
-The project has been tested with Arduino IDE 2.0.4 and AVR-IoT-Cellular library version 1.3.7.
+The project has been tested with Arduino IDE 2.0.4, AVR-IoT-Cellular library version 1.3.8 and DXCore version 1.5.8.
 It is recommended that you install these specific versions.
 * Once your SIM is activated and Arduino environment set up, 
 clone this repo into your Arduino sketch directory under the libraries directory.
 For example, once you clone this SDK, the contents of this repo should be 
 under C:\Users\<your username>\Documents\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
-* **IMPORTANT:** After downloading or opgrading AVR-IoT-Cellular library, ensure to enable the following features
-in atca_config.h located at at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src\cryptoauthlib: 
+* **IMPORTANT:** After downloading or upgrading AVR-IoT-Cellular library, ensure to enable the following features
+in atca_config.h located at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src\cryptoauthlib: 
 ```c
 #define ATCAB_UPDATEEXTRA_EN              FEATURE_ENABLED
 // ...
 #define ATCAB_WRITE_EN                    FEATURE_ENABLED
+```
+and also increase the topic length from 128 to 384 in mqtt_lcient.h 
+located at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src:
+```c
+#define MQTT_TOPIC_MAX_LENGTH 384
 ```
 
 * Open the Arduino IDE and load the avr-iot-provision example by navigating
@@ -45,7 +50,10 @@ to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
 
 ```
 [INFO] Starting the provisioning sample...
-[INFO] Ciphersuites config written successfully.
+[INFO] Setting up MQTT profile #1 and ciphersuites...
+[INFO] MQTT profile and ciphersuite config written successfully.
+[INFO] Setting up HTTP profile #3..
+[INFO] HTTP profile was set up successfully.
 [INFO] HTTPS CA certificate updated successfuly.
 [INFO] MQTT CA certificate updated successfuly.
 -----BEGIN CERTIFICATE-----
@@ -61,7 +69,6 @@ BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
 AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
-
 ```
 * Use the console at this point to provision your code with information found in your account:
   * CPID
@@ -90,21 +97,21 @@ to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-sample from the menu.
 * On a successful run, you should see an output similar to this:
 
 ```
-[INFO] Starting the Sample Application 01.00.00
-[INFO] CPID: avtds
-[INFO] Env : Avnet
+[INFO] Starting the Sample Application 02.00.00
+[INFO] CPID: [your CPID]
+[INFO] Env : [your Env]
 [INFO] DUID: avr-092ee282bb58cf55f34c66e3d3c
 [INFO] Connecting to operator......... OK!
 [INFO] +CCLK: "23/6/26,13:22:7-20"
-[INFO] CPID: avtd***
-[INFO] ENV:  Avnet
+[INFO] CPID: [your CPID]
+[INFO] ENV:  [your Env]
 [INFO] Attempting to connect to MQTT host:poc-iotconnect-iothub-030-eu2.azure-de
 vices.net, client id:avtds-avr-092ee282bb58cf55f34c66e3d3c, username: poc-iotcon
 nect-iothub-030-eu2.azure-devices.net/avtds-avr-092ee282bb58cf55f34c66e3d3c/?api
 -version=2018-06-30
 [INFO] IoTConnect Client Connected
-[INFO] Sending: {"cpid":"avtds","dtg":"620c9902-17dd-46b0-a8a2-b20f77eed493","mt
-":0,"sdk":{"l":"M_C","v":"2.0","e":"Avnet"},"d":[{"id":"avr-092ee282bb58cf55f34c
+[INFO] Sending: {"cpid":"****","dtg":"620c9902-17dd-46b0-a8a2-b20f77eed493","mt
+":0,"sdk":{"l":"M_C","v":"2.0","e":"***"},"d":[{"id":"avr-092ee282bb58cf55f34c
 66e3d3c","tg":"","d":[{"version":"01.00.00","cpu":3.1229999}],"dt":"2023-05-16T1
 7:16:40.000Z"}],"t":"2023-05-16T17:16:40.000Z"}
 ```
