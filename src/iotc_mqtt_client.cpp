@@ -130,19 +130,21 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         Log.rawf(F("."));
         delay(500);
     }
-    // NOTE: WORKAROUND FOR THE SUB TOPIC
-    free(c->sr->broker.sub_topic);
-    c->sr->broker.sub_topic = (char *) malloc(strlen(MQTT_SUB_TOPIC_FORMAT) + 2 * strlen(c->sr->broker.client_id) + 10 /* slack */ );
-    if (!c->sr->broker.sub_topic) {
-        Log.error(F("ERROR: Unable to allocate memory for the sub topic!"));
-        MqttClient.end();
-        return false;
-    }
-    sprintf(c->sr->broker.sub_topic, MQTT_SUB_TOPIC_FORMAT, c->sr->broker.client_id, c->sr->broker.client_id);
     if(!MqttClient.subscribe(c->sr->broker.sub_topic)) {
         Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!"), c->sr->broker.sub_topic);
         return false;
     }
+    // NOTE: WORKAROUND FOR THE SUB TOPIC
+    // we subscribe to devicebound/#,
+    // but hardcode message retrieval to topic devicebound/24.to=%2Fdevices%2F<client-id>%2Fmessages%2FdeviceBound
+    free(c->sr->broker.sub_topic);
+    c->sr->broker.sub_topic = (char *) malloc(strlen(MQTT_SUB_TOPIC_FORMAT) + 2 * strlen(c->sr->broker.client_id) + 10 /* slack */ );
+    if (!c->sr->broker.sub_topic) {
+        Log.error(F("ERROR: Unable to allocate memory for the sub receive topic!"));
+        MqttClient.end();
+        return false;
+    }
+    sprintf(c->sr->broker.sub_topic, MQTT_SUB_TOPIC_FORMAT, c->sr->broker.client_id, c->sr->broker.client_id);
 
     if (c->status_cb) {
         c->status_cb(IOTC_CS_MQTT_CONNECTED);
