@@ -41,6 +41,8 @@
 #define MQTT_PRIVATE_KEY_SLOT (0)
 
 // NOTE the special modem-compatible format for certificates
+// It may be possible to convert these strings to flash strings with
+// the F() macro in the future if needed.
 #define CERT_GODADDY_ROOT_CA_G2 \
 "\n-----BEGIN CERTIFICATE-----\n"\
 "MIIDxTCCAq2gAwIBAgIBADANBgkqhkiG9w0BAQsFADCBgzELMAkGA1UEBhMCVVMx"\
@@ -67,27 +69,30 @@
 "\n-----END CERTIFICATE-----"
 
 // NOTE the special modem-compatible format for certificates
-#define CERT_BALTIMORE_ROOT_CA \
-"\n-----BEGIN CERTIFICATE-----\n" \
-"MIIDdzCCAl+gAwIBAgIEAgAAuTANBgkqhkiG9w0BAQUFADBaMQswCQYDVQQGEwJJ" \
-"RTESMBAGA1UEChMJQmFsdGltb3JlMRMwEQYDVQQLEwpDeWJlclRydXN0MSIwIAYD" \
-"VQQDExlCYWx0aW1vcmUgQ3liZXJUcnVzdCBSb290MB4XDTAwMDUxMjE4NDYwMFoX" \
-"DTI1MDUxMjIzNTkwMFowWjELMAkGA1UEBhMCSUUxEjAQBgNVBAoTCUJhbHRpbW9y" \
-"ZTETMBEGA1UECxMKQ3liZXJUcnVzdDEiMCAGA1UEAxMZQmFsdGltb3JlIEN5YmVy" \
-"VHJ1c3QgUm9vdDCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKMEuyKr" \
-"mD1X6CZymrV51Cni4eiVgLGw41uOKymaZN+hXe2wCQVt2yguzmKiYv60iNoS6zjr" \
-"IZ3AQSsBUnuId9Mcj8e6uYi1agnnc+gRQKfRzMpijS3ljwumUNKoUMMo6vWrJYeK" \
-"mpYcqWe4PwzV9/lSEy/CG9VwcPCPwBLKBsua4dnKM3p31vjsufFoREJIE9LAwqSu" \
-"XmD+tqYF/LTdB1kC1FkYmGP1pWPgkAx9XbIGevOF6uvUA65ehD5f/xXtabz5OTZy" \
-"dc93Uk3zyZAsuT3lySNTPx8kmCFcB5kpvcY67Oduhjprl3RjM71oGDHweI12v/ye" \
-"jl0qhqdNkNwnGjkCAwEAAaNFMEMwHQYDVR0OBBYEFOWdWTCCR1jMrPoIVDaGezq1" \
-"BE3wMBIGA1UdEwEB/wQIMAYBAf8CAQMwDgYDVR0PAQH/BAQDAgEGMA0GCSqGSIb3" \
-"DQEBBQUAA4IBAQCFDF2O5G9RaEIFoN27TyclhAO992T9Ldcw46QQF+vaKSm2eT92" \
-"9hkTI7gQCvlYpNRhcL0EYWoSihfVCr3FvDB81ukMJY2GQE/szKN+OMY3EU/t3Wgx" \
-"jkzSswF07r51XgdIGn9w/xZchMB5hbgF/X++ZRGjD8ACtPhSNzkE1akxehi/oCr0" \
-"Epn3o0WC4zxe9Z2etciefC7IpJ5OCBRLbf1wbWsaY71k5h+3zvDyny67G7fyUIhz" \
-"ksLi4xaNmjICq44Y3ekQEe5+NauQrz4wlHrQMz2nZQ/1/I6eYs9HRCwBXbsdtTLS" \
-"R9I4LtD+gdwyah617jzV/OeBHRnDJELqYzmp" \
+// It may be possible to convert these strings to flash strings with
+// the F() macro in the future if needed.
+#define CERT_DIGICERT_GLOBAL_ROOT_G2_ROOT_CA \
+"\n-----BEGIN CERTIFICATE-----\n"\
+"MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh"\
+"MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3"\
+"d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBH"\
+"MjAeFw0xMzA4MDExMjAwMDBaFw0zODAxMTUxMjAwMDBaMGExCzAJBgNVBAYTAlVT"\
+"MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j"\
+"b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IEcyMIIBIjANBgkqhkiG"\
+"9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuzfNNNx7a8myaJCtSnX/RrohCgiN9RlUyfuI"\
+"2/Ou8jqJkTx65qsGGmvPrC3oXgkkRLpimn7Wo6h+4FR1IAWsULecYxpsMNzaHxmx"\
+"1x7e/dfgy5SDN67sH0NO3Xss0r0upS/kqbitOtSZpLYl6ZtrAGCSYP9PIUkY92eQ"\
+"q2EGnI/yuum06ZIya7XzV+hdG82MHauVBJVJ8zUtluNJbd134/tJS7SsVQepj5Wz"\
+"tCO7TG1F8PapspUwtP1MVYwnSlcUfIKdzXOS0xZKBgyMUNGPHgm+F6HmIcr9g+UQ"\
+"vIOlCsRnKPZzFBQ9RnbDhxSJITRNrw9FDKZJobq7nMWxM4MphQIDAQABo0IwQDAP"\
+"BgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNVHQ4EFgQUTiJUIBiV"\
+"5uNu5g/6+rkS7QYXjzkwDQYJKoZIhvcNAQELBQADggEBAGBnKJRvDkhj6zHd6mcY"\
+"1Yl9PMWLSn/pvtsrF9+wX3N3KjITOYFnQoQj8kVnNeyIv/iPsGEMNKSuIEyExtv4"\
+"NeF22d+mQrvHRAiGfzZ0JFrabA0UWTW98kndth/Jsw1HKj2ZL7tcu7XUIOGZX1NG"\
+"Fdtom/DzMNU+MeKNhJ7jitralj41E6Vf8PlwUHBHQRFXGU7Aj64GxJUTFy8bJZ91"\
+"8rGOmaFvE7FBcf6IKshPECBV1/MUReXgRPTqh5Uykw7+U0b6LJ3/iyK5S9kJRaTe"\
+"pLiaWN0bfVKfjllDiIGknibVb63dDcY3fe0Dkhvld1927jyNxF1WW6LZZm6zNTfl"\
+"MrY=" \
 "\n-----END CERTIFICATE-----"
 
 static bool write_ca_server_certificate(const char* data, const uint8_t slot) {
@@ -105,11 +110,11 @@ static bool write_ca_server_certificate(const char* data, const uint8_t slot) {
 
     SequansController.writeBytes((uint8_t*)command, strlen(command), true);
     SequansController.waitForByte('>', 1000);
-    SequansController.writeBytes((uint8_t*)data, data_length, true);
+    SequansController.writeBytes((const uint8_t*)data, data_length, true);
 
     ResponseResult res = SequansController.readResponse(rbuff, sizeof(rbuff));
     if (res != ResponseResult::OK) {
-        Log.errorf("Write certificate error: %d. Response: \"%s\"\r\n", res, rbuff);
+        Log.errorf(F("Write certificate error: %d. Response: \"%s\"\r\n"), res, rbuff);
         return false;
     }
 
@@ -191,7 +196,7 @@ static bool write_ca_server_certificates(void) {
     return false;
   }
   Log.info(F("HTTPS CA certificate updated successfuly."));
-  if (!write_ca_server_certificate(CERT_BALTIMORE_ROOT_CA, MQTT_CUSTOM_CA_SLOT)) {
+  if (!write_ca_server_certificate(CERT_DIGICERT_GLOBAL_ROOT_G2_ROOT_CA, MQTT_CUSTOM_CA_SLOT)) {
     Log.error(F("Unable to store the MQTT CA certificate!"));
     return false;
   }
@@ -207,13 +212,13 @@ static void print_certificate(uint8_t* certificate, uint16_t size) {
       atcab_base64encode(certificate, size, buffer, &buffer_size);
 
   if (result != ATCA_SUCCESS) {
-      Log.errorf("Failed to encode into base64: %x\r\n", result);
+      Log.errorf(F("Failed to encode into base64: %x\r\n"), result);
       return;
   }
 
   buffer[buffer_size] = 0;
   Log.rawf(
-      "-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n",
+      F("-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n"),
       buffer
   );
 }
@@ -229,14 +234,13 @@ bool print_device_certificate() {
     &device_certificate_size_max
   );
   if (atca_cert_status != ATCACERT_E_SUCCESS) {
-    Log.errorf("Failed to get device certificate's max size, status code: "
-      "0x%x\r\n",
+    Log.errorf(F("Failed to get device certificate's max size, status code: 0x%x\r\n"),
       atca_cert_status
-      );
+    );
     return false;
   }
   if (device_certificate_size_max > certificate_buffer_size) {
-    Log.errorf("ERROR: Device certificate is %lu bytes in size, but the buffer is only  %lu bytes.\r\n",
+    Log.errorf(F("ERROR: Device certificate is %lu bytes in size, but the buffer is only  %lu bytes.\r\n"),
       device_certificate_size_max,
       certificate_buffer_size
     );
@@ -248,10 +252,10 @@ bool print_device_certificate() {
       &device_certificate_size
   );
   if (atca_cert_status != ATCACERT_E_SUCCESS) {
-      Log.errorf("Failed to get device certificate, status code: "
-                  "0x%X\r\n",
-                  atca_cert_status);
-      return false;
+    Log.errorf(F("Failed to get device certificate, status code: 0x%X\r\n"),
+      atca_cert_status
+    );
+    return false;
   }
   print_certificate(certificate_buffer, device_certificate_size);
   return true;

@@ -169,7 +169,7 @@ static ATCA_STATUS load_ecc608_cache(void) {
         &slot_size
     );
     if (ATCA_SUCCESS != atca_status)  {
-        Log.errorf("IOTC_ECC608: Unable to read zone size: %d\r\n", atca_status);
+        Log.errorf(F("IOTC_ECC608: Unable to read zone size: %d\r\n"), atca_status);
         return atca_status;
     }
 
@@ -212,6 +212,30 @@ static ATCA_STATUS load_ecc608_cache(void) {
     return ATCA_SUCCESS;
 }
 
+ATCA_STATUS iotc_ecc608_get_serial_as_string(char* serial_str) {
+    ATCA_STATUS status;
+    uint8_t serial_buffer[ATCA_SERIAL_NUM_SIZE];
+
+    status = atcab_init(&cfg_atecc608b_i2c);
+    if (status != ATCA_SUCCESS) {
+        printf("atcab_init() failed: %02x\r\n", status);
+        return status;
+    }
+
+    status = atcab_read_serial_number(serial_buffer);
+    if (status != ATCA_SUCCESS) {
+        printf("atcab_read_serial_number() failed: %02x\r\n", status);
+        return status;
+    }
+
+    for (int i = 0; i < ATCA_SERIAL_NUM_SIZE; i++) {
+        sprintf(&serial_str[i * 2], "%02X", serial_buffer[i]);
+    }
+    serial_str[ATCA_SERIAL_NUM_SIZE * 2] = 0;
+
+    return ATCA_SUCCESS;
+}
+
 // for debugging purposes
 void iotc_ecc608_dump_provision_data(void) {
     DataHeaderUnion* h = (DataHeaderUnion *) data_cache;
@@ -227,7 +251,7 @@ void iotc_ecc608_dump_provision_data(void) {
         }
 
         Log.infof(
-            "Type:%d, size:%u, next:%u %s\r\n",
+            F("Type:%d, size:%u, next:%u %s\r\n"),
             h->header.type,
             ecchdr_get_data_size(h),
             h->header.next,
@@ -321,12 +345,13 @@ ATCA_STATUS iotc_ecc608_write_all_data(void) {
         IOTC_DATA_SLOT_SIZE // we already checked that the actual size matches
     );
     if (ATCA_SUCCESS != atca_status) {
-        Log.errorf("Failed to write provisioning data! Error %d\r\n", atca_status);
+        Log.errorf(F("Failed to write provisioning data! Error %d\r\n"), atca_status);
         return atca_status;
     }
     return ATCA_SUCCESS;
 }
 
+#if 0
 // Keeping this function for reference only. It shows some usage examples.
 void iotc_ecc608_unit_test (void){
     iotc_ecc608_init_provision();
@@ -370,3 +395,4 @@ void iotc_ecc608_unit_test (void){
 
     //iotc_ecc608_write_all_data();
 }
+#endif

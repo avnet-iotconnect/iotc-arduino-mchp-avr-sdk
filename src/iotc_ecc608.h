@@ -42,6 +42,8 @@
 #define IOTC_ECC608_PROV_CPID_SIZE 66
 #define IOTC_ECC608_PROV_ENV_SIZE 20
 
+// the buffer should be at least 2 * ATCA_SERIAL_NUM_SIZE + 1
+ATCA_STATUS iotc_ecc608_get_serial_as_string(char* serial_str);
 
 ATCA_STATUS iotc_ecc608_init_provision(void);
 

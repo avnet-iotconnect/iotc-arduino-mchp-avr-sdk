@@ -1,3 +1,4 @@
+// Hello
 #include <Arduino.h>
 #include "log.h"
 #include "cryptoauthlib/app/tng/tng_atcacert_client.h"
@@ -13,10 +14,9 @@
 #define ASCII_DELETE          (0x7F)
 #define ASCII_SPACE           (0x20)
 
-#define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
-static char aws_id_buff[AWS_ID_BUFF_SIZE];
-#define GENERATED_ID_PREFIX "avr-"
-#define DUID_WEB_UI_MAX_LEN 31
+#define GENERATED_ID_PREFIX "sn"
+
+static char duid_from_serial_buf[sizeof(GENERATED_ID_PREFIX) + ATCA_SERIAL_NUM_SIZE * 2];
 
 static bool load_provisioned_data(IotConnectClientConfig *config) {
   if (ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_CPID, &(config->cpid))) {
@@ -35,7 +35,7 @@ static bool load_provisioned_data(IotConnectClientConfig *config) {
   return ret;
 }
 
-// function reused from Mircochip's provision.ino 
+// function reused from Mircochip's provision.ino
 static bool read_until_newline(char* output_buffer, const size_t output_buffer_length) {
     size_t index = 0;
 
@@ -80,23 +80,23 @@ static bool validate_user_input(const char* value, bool required, bool dash_allo
       return false;
     } else {
       return true; // field is not required, so it can be empty
-    }  
+    }
   }
   for (size_t i = 0; i < strlen(value); i++) {
     char ch = value[i];
-    bool valid = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (dash_allowed && ch == '-');    
+    bool valid = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (dash_allowed && ch == '-');
     if (!valid) {
       Log.infof("Invalid character '%c' with ASCII code 0x%x encountered in input.\r\n", ch, ch);
       Log.info("Please check your input try again...");
       return false;
     }
-  }  
+  }
   return true; // all characters are valid and input is non-empty
 }
 
 static void print_string_or_default(const char* item, const char* value, const char* default_value) {
-  if (!value) {
-    SerialModule.printf("%s: [%s]\r\n", item, default_value);
+  if (!value || 0 == strlen(value)) {
+    SerialModule.printf("%s: (%s)\r\n", item, default_value);
   } else {
     SerialModule.printf("%s: %s\r\n", item, value);
   }
@@ -106,13 +106,13 @@ static bool provision_from_user_input(IotConnectClientConfig *config) {
   char cpid_buff[IOTC_ECC608_PROV_CPID_SIZE];
   char env_buff[IOTC_ECC608_PROV_ENV_SIZE];
   char duid_buff[IOTC_ECC608_PROV_DUID_SIZE];
-  
+
   SerialModule.printf(" Please enter your IoTConnect device configuration.\r\n");
 
-  SerialModule.printf(" If DUID is empty, the following deivce ID will be used\r\n");
-  SerialModule.printf(" %s\r\n", aws_id_buff);
-  
-  do {    
+  SerialModule.printf(" If DUID is empty, the following deivce ID will be :\r\n");
+  SerialModule.printf(" %s\r\n", duid_from_serial_buf);
+
+  do {
     SerialModule.print("\r\nCPID: ");
   } while(!read_until_newline(cpid_buff, IOTC_ECC608_PROV_CPID_SIZE - 1)
     || !validate_user_input(cpid_buff, true, false));
@@ -121,7 +121,7 @@ static bool provision_from_user_input(IotConnectClientConfig *config) {
       ; // do forever
   } while(!read_until_newline(env_buff, IOTC_ECC608_PROV_ENV_SIZE - 1)
     || !validate_user_input(env_buff, true, false));
-    
+
   do {
     SerialModule.print("\r\nDUID: ");
   } while(!read_until_newline(duid_buff, IOTC_ECC608_PROV_DUID_SIZE - 1)
@@ -163,7 +163,7 @@ void setup() {
   Log.info("Starting the provisioning sample...");
 
   iotc_prov_init();
-  
+
   if (ATCA_SUCCESS != iotc_ecc608_init_provision()) {
     return; // caller will print the error
   }
@@ -175,14 +175,10 @@ void setup() {
 
   iotc_prov_print_device_certificate();
 
-  strcpy(aws_id_buff, GENERATED_ID_PREFIX);
-  char* bufer_location = &aws_id_buff[strlen(GENERATED_ID_PREFIX)];
-  size_t buffer_size = AWS_ID_BUFF_SIZE - strlen(GENERATED_ID_PREFIX);    
-  if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, bufer_location, buffer_size)) {
+  strcpy(duid_from_serial_buf, GENERATED_ID_PREFIX);
+  if (ATCA_SUCCESS != iotc_ecc608_get_serial_as_string(&duid_from_serial_buf[strlen(GENERATED_ID_PREFIX)])) {
     return; // caller will print the error
   }
-  // terminate for max length
-  aws_id_buff[DUID_WEB_UI_MAX_LEN] = 0;
 
   IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
   if (!load_provisioned_data(config)) {
@@ -192,14 +188,14 @@ void setup() {
   SerialModule.printf("\r\nCurrent provisioning data:\r\n");
   print_string_or_default("CPID\t\t", config->cpid, "[EMPTY]");
   print_string_or_default("Environment\t", config->env, "[EMPTY]");
-  print_string_or_default("Device Uinque ID", config->duid, aws_id_buff);
+  print_string_or_default("Device Uinque ID", config->duid, duid_from_serial_buf);
 
   while (!provision_from_user_input(config)) {};
 
   SerialModule.printf("New provisioning data:\r\n");
   print_string_or_default("CPID", config->cpid, "[EMPTY]");
   print_string_or_default("Environment", config->env, "[EMPTY]");
-  print_string_or_default("Device Uinque ID", config->duid, aws_id_buff);
+  print_string_or_default("Device Uinque ID", config->duid, duid_from_serial_buf);
 
   Log.info("========= Provisioning Complete =========");
 }

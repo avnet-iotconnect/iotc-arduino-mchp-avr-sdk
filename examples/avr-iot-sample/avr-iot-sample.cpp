@@ -1,4 +1,3 @@
-//
 // Copyright: Avnet, Softweb Inc. 2023
 // Created by Nik Markovic <nikola.markovic@avnet.com> on 3/17/23.
 //
@@ -19,11 +18,11 @@
 
 #define APP_VERSION "01.02.00"
 
-#define AWS_ID_BUFF_SIZE 130 // normally 41, but just to be on the safe size
-#define GENERATED_ID_PREFIX "avr-"
-#define DUID_WEB_UI_MAX_LEN 31
+#define GENERATED_ID_PREFIX "sn"
 
-static char aws_id_buff[AWS_ID_BUFF_SIZE];
+static char duid_from_serial_buf[sizeof(GENERATED_ID_PREFIX) + ATCA_SERIAL_NUM_SIZE * 2];
+
+
 static bool connected_to_network = false;
 static bool button_pressed = false;
 static int button_press_count = 0;
@@ -40,21 +39,21 @@ static void on_connection_status(IotConnectConnectionStatus status) {
     // Add your own status handling
     switch (status) {
         case IOTC_CS_MQTT_CONNECTED:
-            Log.info("IoTConnect Client Connected");
+            Log.info(F("IoTConnect Client Connected"));
             break;
         case IOTC_CS_MQTT_DISCONNECTED:
-            Log.info("IoTConnect Client Disconnected");
+            Log.info(F("IoTConnect Client Disconnected"));
             break;
         default:
-            Log.error("IoTConnect Client ERROR");
+            Log.error(F("IoTConnect Client ERROR"));
             break;
     }
 }
 
 static void command_status(IotclEventData data, bool status, const char *command_name, const char *message) {
     const char *ack = iotcl_create_ack_string_and_destroy_event(data, status, message);
-    printf("command: %s status=%s: %s\n", command_name, status ? "OK" : "Failed", message);
-    printf("Sent CMD ack: %s\n", ack);
+    Log.infof(F("command: %s status=%s: %s\n"), command_name, status ? "OK" : "Failed", message);
+    Log.infof(F("Sent CMD ack: %s\n"), ack);
     iotconnect_sdk_send_packet(ack);
     free((void *) ack);
 }
@@ -77,7 +76,7 @@ static void on_command(IotclEventData data) {
             }
             command_status(data, true, command, "OK");
         } else {
-            printf("Unknown command:%s\r\n", command);
+            Log.errorf(F("Unknown command:%s\r\n"), command);
             command_status(data, false, command, "Not implemented");
         }
         free((void *) command);
@@ -99,18 +98,18 @@ static void on_ota(IotclEventData data) {
     char *url = iotcl_clone_download_url(data, 0);
     bool success = false;
     if (NULL != url) {
-        printf("Download URL is: %s\n", url);
+        Log.infof(F("Download URL is: %s\n"), url);
         const char *version = iotcl_clone_sw_version(data);
         if (is_app_version_same_as_ota(version)) {
-            printf("OTA request for same version %s. Sending success\n", version);
+            Log.infof(F("OTA request for same version %s. Sending success\n"), version);
             success = true;
             message = "Version is matching";
         } else if (app_needs_ota_update(version)) {
-            printf("OTA update is required for version %s.\n", version);
+            Log.infof(F("OTA update is required for version %s.\n"), version);
             success = false;
             message = "Not implemented";
         } else {
-            printf("Device firmware version %s is newer than OTA version %s. Sending failure\n", APP_VERSION,
+            Log.infof(F("Device firmware version %s is newer than OTA version %s. Sending failure\n"), APP_VERSION,
                    version);
             // Not sure what to do here. The app version is better than OTA version.
             // Probably a development version, so return failure?
@@ -127,14 +126,14 @@ static void on_ota(IotclEventData data) {
         const char *command = iotcl_clone_command(data);
         if (NULL != command) {
             // URL will be inside the command
-            printf("Command is: %s\n", command);
+            Log.infof(F("Command is: %s\n"), command);
             message = "Old back end URLS are not supported by the app";
             free((void *) command);
         }
     }
     const char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
     if (NULL != ack) {
-        printf("Sent OTA ack: %s\n", ack);
+        Log.infof(F("Sent OTA ack: %s\n"), ack);
         iotconnect_sdk_send_packet(ack);
         free((void *) ack);
     }
@@ -157,7 +156,7 @@ static void publish_telemetry() {
 
     const char *str = iotcl_create_serialized_string(msg, false);
     iotcl_telemetry_destroy(msg);
-    Log.infof("Sending: %s\r\n", str);
+    Log.infof(F("Sending: %s\r\n"), str);
     iotconnect_sdk_send_packet(str); // underlying code will report an error
     iotcl_destroy_serialized(str);
 }
@@ -198,13 +197,13 @@ void memory_test() {
     int i = 0;
     for (; i < TEST_BLOCK_COUNT; i++) {
         void *ptr = malloc(TEST_BLOCK_SIZE);
-        Log.infof("0x%x\r\n", (unsigned long) ptr);
+        Log.infof(F("0x%x\r\n"), (unsigned long) ptr);
         blocks[i] = ptr;
         if (!ptr) {
             break;
         }
     }
-    Log.infof("====Allocated %d blocks of size %d (of max %d)===\r\n", i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
+    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\r\n"), i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
     for (int j = 0; j < i; j++) {
         free(blocks[j]);
     }
@@ -224,7 +223,7 @@ void reserve_stack_with_heap_leak() {
             break;
         }
     }
-    Log.infof("====Allocated %d blocks of size %d (of max %d)===\r\n", i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
+    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\r\n"), i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
     for (int j = 0; j < (i - RESERVE_LEAK_COUNT); j++) {
         free(blocks[j]);
     }
@@ -233,9 +232,10 @@ void reserve_stack_with_heap_leak() {
 void demo_setup(void)
 {
   Log.begin(115200);
+  Log.setLogLevel(LogLevel::INFO);
   delay(2000);
 
-  Log.infof("Starting the Sample Application %s\r\n", APP_VERSION);
+  Log.infof(F("Starting the Sample Application %s\r\n"), APP_VERSION);
 
   LedCtrl.begin();
   LedCtrl.startupCycle();
@@ -252,7 +252,7 @@ void demo_setup(void)
   attachInterrupt(PIN_PD2, pd2_button_interrupt, FALLING);
 
   if (ATCA_SUCCESS != iotc_ecc608_init_provision()) {
-    Log.error("Failed to read provisioning data!");
+    Log.error(F("Failed to read provisioning data!"));
     delay(10000);
     return; // caller will print the error
   }
@@ -267,20 +267,16 @@ void demo_setup(void)
   }
 
   if (!config->duid || 0 == strlen(config->duid)) {
-    strcpy(aws_id_buff, GENERATED_ID_PREFIX);
-    char* bufer_location = &aws_id_buff[strlen(GENERATED_ID_PREFIX)];
-    size_t buffer_size = AWS_ID_BUFF_SIZE - strlen(GENERATED_ID_PREFIX);
-    if (ATCA_SUCCESS != iotc_ecc608_copy_string_value(AWS_THINGNAME, bufer_location, buffer_size)) {
+    strcpy(duid_from_serial_buf, GENERATED_ID_PREFIX);
+    if (ATCA_SUCCESS != iotc_ecc608_get_serial_as_string(&duid_from_serial_buf[strlen(GENERATED_ID_PREFIX)])) {
       return; // caller will print the error
     }
-    // terminate for max length
-    aws_id_buff[DUID_WEB_UI_MAX_LEN] = 0;
 
-    config->duid = aws_id_buff;
+    config->duid = duid_from_serial_buf;
   }
-  Log.infof("CPID: %s\r\n", config->cpid);
-  Log.infof("ENV : %s\r\n", config->env);
-  Log.infof("DUID: %s\r\n", config->duid);
+  Log.infof(F("CPID: %s\r\n"), config->cpid);
+  Log.infof(F("ENV : %s\r\n"), config->env);
+  Log.infof(F("DUID: %s\r\n"), config->duid);
 
   if (!connect_lte()) {
       return;
@@ -308,6 +304,7 @@ void demo_setup(void)
           break;
         }
        iotconnect_sdk_loop(); // loop will take 2 seconds to complete (related to the modem polling most likely)
+       delay(2000);
         if (button_pressed) {
           button_pressed = false;
           LedCtrl.startupCycle(); // first publish once then flicker leds
@@ -315,18 +312,19 @@ void demo_setup(void)
           for (int burst_count = 0; burst_count < 20; burst_count++) {
             publish_telemetry(); // publish as soon as we detect that button stat changed
             iotconnect_sdk_loop(); // loop will take 2 seconds to complete (related to the modem polling most likely)
+            delay(2000);
           }
         }
       }
     }
   } else {
-    Log.error("Encountered an error while initializing the SDK!");
+    Log.error(F("Encountered an error while initializing the SDK!"));
     return;
   }
 
   iotconnect_sdk_disconnect();
   Lte.end();
-  printf("Done.\n");
+  Log.infof(F("Done.\n"));
 }
 
 void demo_loop() {

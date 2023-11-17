@@ -14,6 +14,7 @@
 #include "iotc_mqtt_client.h"
 
 #define MQTT_SECURE_PORT 8883
+#define MQTT_SUB_TOPIC_FORMAT "devices/%s/messages/devicebound/%%24.to=%%2Fdevices%%2F%s%%2Fmessages%%2FdeviceBound"
 
 static bool disconnect_received = false;
 static IotConnectMqttClientConfig* c = NULL;
@@ -47,7 +48,7 @@ void iotc_mqtt_client_loop() {
     // messages, so anything other than that means that there was a new
     // message
     if (message != "") {
-        Log.infof("Got new message: %s", message.c_str());
+        Log.infof(F("Got new message: %s"), message.c_str());
         if (c->c2d_msg_cb) {
             const char* c_str = message.c_str();
             c->c2d_msg_cb(c_str);
@@ -55,11 +56,6 @@ void iotc_mqtt_client_loop() {
     }
 }
 
-static void on_mqtt_connected(void) {
-    if (c->status_cb) {
-        c->status_cb(IOTC_CS_MQTT_CONNECTED);
-    }
-}
 static void on_mqtt_disconnected(void) {
     disconnect_received = true;
     if (c->status_cb) {
@@ -100,7 +96,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         true,
         c->sr->broker.user_name,
         "")) {
-            Log.errorf("Failed to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
+            Log.errorf(F("Failed to connect to MQTT using host:%s, client id:%s, username: %s\r\n"),
                 c->sr->broker.host,
                 c->sr->broker.client_id,
                 c->sr->broker.user_name
@@ -108,14 +104,14 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
             return false;
     }
 
-    MqttClient.onConnectionStatusChange(on_mqtt_connected, on_mqtt_disconnected);
+    MqttClient.onDisconnect(on_mqtt_disconnected);
 
     int tires_num_500ms = 120; // 60 seconds
     while (!MqttClient.isConnected()) {
         tires_num_500ms--;
         if (tires_num_500ms < 0) {
             Log.raw(F("")); // start in a new line
-            Log.errorf("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
+            Log.errorf(F("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n"),
                 c->sr->broker.host,
                 c->sr->broker.client_id,
                 c->sr->broker.user_name
@@ -124,21 +120,31 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
             return false;
         }
         if (disconnect_received) {
-            Log.errorf("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n",
+            Log.errorf(F("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n"),
                 c->sr->broker.host,
                 c->sr->broker.client_id,
                 c->sr->broker.user_name
             );
             return false;
         }
-        Log.rawf(".");
+        Log.rawf(F("."));
         delay(500);
     }
     if(!MqttClient.subscribe(c->sr->broker.sub_topic)) {
-        Log.errorf("ERROR: Unable to subscribe for C2D messages topic %s!", c->sr->broker.sub_topic);
+        Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!"), c->sr->broker.sub_topic);
         return false;
     }
-
+    // NOTE: WORKAROUND FOR THE SUB TOPIC
+    // we subscribe to devicebound/#,
+    // but hardcode message retrieval to topic devicebound/24.to=%2Fdevices%2F<client-id>%2Fmessages%2FdeviceBound
+    free(c->sr->broker.sub_topic);
+    c->sr->broker.sub_topic = (char *) malloc(strlen(MQTT_SUB_TOPIC_FORMAT) + 2 * strlen(c->sr->broker.client_id) + 10 /* slack */ );
+    if (!c->sr->broker.sub_topic) {
+        Log.error(F("ERROR: Unable to allocate memory for the sub receive topic!"));
+        MqttClient.end();
+        return false;
+    }
+    sprintf(c->sr->broker.sub_topic, MQTT_SUB_TOPIC_FORMAT, c->sr->broker.client_id, c->sr->broker.client_id);
 
     if (c->status_cb) {
         c->status_cb(IOTC_CS_MQTT_CONNECTED);

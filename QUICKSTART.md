@@ -21,7 +21,7 @@ An IoTConnect account is required to continue this guide. If you need to create 
 ## IoTConnect Firmware
 ***Note:** This process will require a USB A to USB C cable which is **not included** in the AVR-IoT Cell Mini kit.
 
-* Download and extract the pre-compiled firmware ([avr-iot-071923.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-071923.zip)).
+* Download and extract the pre-compiled firmware ([avr-iot-02.00.00.zip](https://saleshosted.z13.web.core.windows.net/sdk/arduino/avr-iot-02.00.00.zip)).
 * The package contains two files:
   * **avr-iot-provision.ino.hex:** Provisioning firmware. This will need to be loaded and run once to provision the board with the IoTConnect CPID and Environment information.
   * **avr-iot-sample.ino.hex:** Sample firmware. This is the actual sample code which should be loaded only after the board has been provisioned.
@@ -39,7 +39,10 @@ An IoTConnect account is required to continue this guide. If you need to create 
 
 ```
 [INFO] Starting the provisioning sample...
-[INFO] Ciphersuites config written successfully.
+[INFO] Setting up MQTT profile #1 and ciphersuites...
+[INFO] MQTT profile and ciphersuite config written successfully.
+[INFO] Setting up HTTP profile #3..
+[INFO] HTTP profile was set up successfully.
 [INFO] HTTPS CA certificate updated successfuly.
 [INFO] MQTT CA certificate updated successfuly.
 -----BEGIN CERTIFICATE-----
@@ -48,13 +51,14 @@ HwYDVQQKDBhNaWNyb2NoaXAgVGVjaG5vbG9neSBJbmMxKjAoBgNVBAMMIUNyeXB0
 byBBdXRoZW50aWNhdGlvbiBTaWduZXIgMkQzMDAgFw0yMTAzMjUxMTAwMDBaGA8y
 MDQ5MDMyNTExMDAwMFowQjEhMB8GA1UECgwYTWljcm9jaGlwIFRlY2hub2xvZ3kg
 SW5jMR0wGwYDVQQDDBRzbjAxMjNFRTdBMTQzMjlEM0QwMTBZMBMGByqGSM49AgEG
-CCqGSM49AwEHA0IA   [Sample Certificate]   /UeQWE93uvUa3Z3XHuoZis
+CCqGSM49AwEHA0IABNHmLcX7BUciDWCRoXyWM1UBd1/UeQWE93uvUa3Z3XHuoZis
 naG+sYdmoGhgkfhwjYKH7eATjrSKeFPfX9c/vlOjYDBeMAwGA1UdEwEB/wQCMAAw
 DgYDVR0PAQH/BAQDAgOIMB0GA1UdDgQWBBReZ3gqfZtIp+p4ZMn+FkIVTx5E6TAf
 BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
 AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
+
 ```
 * Use the console to set the values for **CPID** and **ENV** which were obtained from the IoTConnect Web GUI in a previous step.
 * The DUID value should be left unset. A DUID unique to your device will be generated and displayed on the console during startup.
@@ -68,7 +72,7 @@ This can be done with openssl command line or [this web site](https://www.samlto
 * On a successful run, you should see an output similar to this:
 
 ```
-[INFO] Starting the Sample Application 01.00.00
+[INFO] Starting the Sample Application 02.00.00
 [INFO] CPID: [your CPID]
 [INFO] Env : [your Env]
 [INFO] DUID: avr-092ee282bb58cf55f34c66e3d3c
