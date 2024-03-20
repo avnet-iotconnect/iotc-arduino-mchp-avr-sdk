@@ -62,9 +62,17 @@ AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 ```
 * Use the console to set the values for **CPID** and **ENV** which were obtained from the IoTConnect Web GUI in a previous step.
 * The DUID value should be left unset. A DUID unique to your device will be generated and displayed on the console during startup.
-* Obtain the fingerprint of the device certificate that is displayed on the screen.
-This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
-* Note the **fingerprint** and the **Device ID** value and use it in the next steps.
+* Note or save the device certificate displayed on the terminal (including the BEGIN and END lines) 
+ and the **Device ID** value, and use it in the next steps.
+
+## IoTConnect Setup
+
+* Log into your IoTConnect account and create a new template using the IoTConnect Web user interface.
+use the Self-Signed authentication type with a property with name "version" of type STRING and property with name
+"random" and type NUMBER.
+* Create a new device with name displayed on the provisioning sketch output above:
+* Select your template created in the previous step.
+* Upload or paste or your device certificate and create the device.
 
 ## Running Demo Code with Arduino IDE
 

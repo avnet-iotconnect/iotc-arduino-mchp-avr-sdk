@@ -75,9 +75,8 @@ AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
   * Environment
 * You may choose to enter a blank Device Unique ID (DUID), and in that case the default 
 auto-generated ID, unique for each board will user. This ID will be printed on the screen.
-* Obtain the fingerprint of the device certificate that is displayed on the screen above.
-This can be done with openssl command line or [this web site](https://www.samltool.com/fingerprint.php)
-* Note the **fingerprint** and the **Device ID** value and use it in the next steps.
+* Note or save the device certificate displayed on the terminal (including the BEGIN and END lines) 
+ and the **Device ID** value, and use it in the next steps.
 
 ## IoTConnect Setup
 
@@ -86,8 +85,7 @@ use the Self-Signed authentication type with a property with name "version" of t
 "random" and type NUMBER.
 * Create a new device with name displayed on the provisioning sketch output above:
 * Select your template created in the previous step.
-* Paste your SHA1 or SHA256 fingerprint obtained in the previous steps as the *Primary Thumbprint* value. 
-The pasted value should not contain colons. You may leave the *Secondary Thumbprint* value blank.
+* Upload or paste or your device certificate and create the device.
 
 ## Running Demo Code with Arduino IDE
 
