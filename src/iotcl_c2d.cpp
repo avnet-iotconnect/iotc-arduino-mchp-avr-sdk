@@ -76,27 +76,34 @@ static bool is_valid_string(const cJSON *json) {
 static int iotcl_c2d_parse_json(cJSON *root) {
     int status; // unknown in case someone forgot to set it
 
+    // forward declare these variables to avoid permissive warnings due to goto-s.
+    struct IotclC2dEventDataTag event_data = {0};
+    char *version;
+    cJSON *j_v;
+    cJSON *j_ct;
+    int type;
+
     // parse version
-    cJSON *j_v = cJSON_GetObjectItem(root, "v");
+    j_v = cJSON_GetObjectItem(root, "v");
     if (!is_valid_string(j_v)) {
         status = IOTCL_ERR_PARSING_ERROR;
         IOTCL_ERROR(status, "Unable to parse protocol version from the message");
         goto cleanup;
     }
-    char *version = cJSON_GetStringValue(j_v);
+    version = cJSON_GetStringValue(j_v);
     if (strcmp(version, "2.1") != 0 && !is_protocol_version_warning_printed) {
         is_protocol_version_warning_printed = true;
         IOTCL_ERROR(IOTCL_ERR_PARSING_ERROR, "Encountered potentially unsupported protocol version %s!", version);
     }
 
     // parse event type
-    cJSON *j_ct = cJSON_GetObjectItem(root, "ct");
+    j_ct = cJSON_GetObjectItem(root, "ct");
     if (!j_ct || !cJSON_IsNumber(j_ct)) {
         status = IOTCL_ERR_PARSING_ERROR;
         IOTCL_ERROR(status, "Unable to parse message type (\"ct\")");
         goto cleanup;
     }
-    int type = (int) cJSON_GetNumberValue(j_ct);
+    type = (int) cJSON_GetNumberValue(j_ct);
 
     if (type != IOTCL_C2D_ET_DEVICE_COMMAND && type != IOTCL_C2D_ET_DEVICE_OTA) {
         status = IOTCL_ERR_PARSING_ERROR;
@@ -104,9 +111,8 @@ static int iotcl_c2d_parse_json(cJSON *root) {
         goto cleanup;
     }
 
-    struct IotclC2dEventDataTag event_data = {0};
     event_data.root = root;
-    event_data.type = type;
+    event_data.type = (IotclC2dEventType) type;
 
     root = NULL; // Clear this pointer to avoid a double free in case some other step that can fail is added below
 
@@ -169,9 +175,12 @@ static cJSON *iotcl_c2d_get_ota_url_array_item(IotclC2dEventData data, int index
 static char *iotcl_c2d_create_ack(IotclC2dEventType type, const char *ack_id, int status, const char *message) {
     char *result = NULL;
 
+    // forward declare these variables to avoid permissive warnings due to goto-s.
+    cJSON *ack_d;
+
     cJSON *ack_json = cJSON_CreateObject();
     if (!ack_json) goto cleanup;
-    cJSON *ack_d = cJSON_AddObjectToObject(ack_json, "d");
+    ack_d = cJSON_AddObjectToObject(ack_json, "d");
     if (!ack_d) goto cleanup;
 
     if (!cJSON_AddStringToObject(ack_d, "ack", ack_id)) goto cleanup;
@@ -263,7 +272,7 @@ const char *iotcl_c2d_get_ota_url_hostname(IotclC2dEventData data, int index) {
         return NULL;
     }
     size_t hostname_str_len = (size_t) (resource_start - host_start);
-    char *hostname = iotcl_malloc(hostname_str_len + 1 /* for null terminator */);
+    char *hostname = (char *) iotcl_malloc(hostname_str_len + 1 /* for null terminator */);
     if (!hostname) {
         IOTCL_ERROR(IOTCL_ERR_OUT_OF_MEMORY, "Out of memory while allocating the OTA hostname string");
         return NULL;

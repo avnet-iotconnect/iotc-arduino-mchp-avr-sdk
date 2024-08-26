@@ -9,6 +9,7 @@
 
 #include "iotcl.h"
 #include "iotcl_internal.h"
+#include "iotcl_util.h"
 #include "iotcl_log.h"
 #include "iotcl_dra_identity.h"
 
@@ -48,30 +49,43 @@ static void iotcl_dra_clear_and_free_mqtt_config(IotclMqttConfig* c) {
 static int iotcl_dra_parse_response_and_configure_iotcl(cJSON *json_root) {
     const char *f;
     IotclMqttConfig* c = NULL;
+
+    // forward declare these variables to avoid permissive warnings due to goto-s.
+    int response_status;
+    cJSON *j_status = NULL;
+    cJSON *j_d = NULL;
+    cJSON *j_ec = NULL;
+    cJSON *j_meta = NULL;
+    cJSON *j_cd = NULL;
+    cJSON *j_topics = NULL;
+    cJSON *j_p = NULL;
+    int ec;
+
+
     if (!json_root) {
         IOTCL_ERROR(IOTCL_ERR_PARSING_ERROR, "DRA Identity: Parsing error or ran out of memory while parsing the response!");
         return IOTCL_ERR_PARSING_ERROR;
     }
 
     f = "status";
-    cJSON *j_status = cJSON_GetObjectItem(json_root, f);
+    j_status = cJSON_GetObjectItem(json_root, f);
     if (!j_status || !cJSON_IsNumber(j_status)) goto cleanup;
 
-    int response_status = (int) cJSON_GetNumberValue(j_status);
+    response_status = (int) cJSON_GetNumberValue(j_status);
     if (200 != response_status) {
         IOTCL_ERROR(IOTCL_ERR_BAD_VALUE, "DRA Identity: Bad response status %d!", response_status);
         return IOTCL_ERR_BAD_VALUE;
     }
 
     f = "d";
-    cJSON *j_d = cJSON_GetObjectItem(json_root, f);
+    j_d = cJSON_GetObjectItem(json_root, f);
     if (!j_d || !cJSON_IsObject(j_d)) goto cleanup;
 
 
     f = "ec";
-    cJSON *j_ec = cJSON_GetObjectItem(j_d, f);
+    j_ec = cJSON_GetObjectItem(j_d, f);
     if (!j_ec || !cJSON_IsNumber(j_ec)) goto cleanup;
-    int ec = (int)cJSON_GetNumberValue(j_ec);
+    ec = (int)cJSON_GetNumberValue(j_ec);
 
     if (0 != ec) {
         const char* ec_message;
@@ -84,21 +98,21 @@ static int iotcl_dra_parse_response_and_configure_iotcl(cJSON *json_root) {
         return IOTCL_ERR_BAD_VALUE;
     }
 
-    cJSON *j_meta = cJSON_GetObjectItem(j_d, "meta");
+    j_meta = cJSON_GetObjectItem(j_d, "meta");
     if (!j_meta || !cJSON_IsObject(j_meta)) goto cleanup;
 
-    cJSON *j_cd = cJSON_GetObjectItem(j_meta, "cd");
+    j_cd = cJSON_GetObjectItem(j_meta, "cd");
     if (!j_cd || !cJSON_IsString(j_cd)) goto cleanup;
 
     // NOTE: Consider a safe way to get meta.v without potentially running into floating point precision issues.
     // and compare to a number like 2.1. We could use that to report that the back end version is different than the protocol version.
 
     f = "p";
-    cJSON *j_p = cJSON_GetObjectItem(j_d, f);
+    j_p = cJSON_GetObjectItem(j_d, f);
     if (!j_p || !cJSON_IsObject(j_p)) goto cleanup;
 
     f = "topics"; // inside "p"
-    cJSON *j_topics = cJSON_GetObjectItem(j_p, f);
+    j_topics = cJSON_GetObjectItem(j_p, f);
     if (!j_topics || !cJSON_IsObject(j_topics)) goto cleanup;
 
     c = iotcl_mqtt_get_config();
@@ -112,7 +126,7 @@ static int iotcl_dra_parse_response_and_configure_iotcl(cJSON *json_root) {
     c->pub_ack = iotcl_strdup_json_string(j_topics, "ack");
     c->sub_c2d = iotcl_strdup_json_string(j_topics, "c2d");
     c->cd = iotcl_strdup_json_string(j_meta, "cd");
-    c->version = IOTCL_PROTOCOL_VERSION_DEFAULT;
+    c->version = iotcl_strdup(IOTCL_PROTOCOL_VERSION_DEFAULT);
 
     // NOTE: username should be null for aws, but currently identity returns one
     // We don't know whether this is aws or not just based on identity response
@@ -154,7 +168,7 @@ int iotcl_dra_identity_build_url(IotclDraUrlContext *base_url_context, const cha
         return IOTCL_ERR_MISSING_VALUE;
     }
     int suffix_size = snprintf(NULL, 0, IOTC_DRA_IDENTITY_FORMAT, duid);
-    char* suffix = iotcl_malloc((size_t) suffix_size + 1);
+    char* suffix = (char *) iotcl_malloc((size_t) suffix_size + 1);
     sprintf(suffix, IOTC_DRA_IDENTITY_FORMAT, duid);
     int status = iotcl_dra_url_use_suffix_path(base_url_context, suffix); // the called function will report error
     iotcl_free(suffix);

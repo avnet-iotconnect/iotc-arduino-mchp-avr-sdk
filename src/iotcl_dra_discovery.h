@@ -35,7 +35,7 @@ int iotcl_dra_discovery_init_url_azure(IotclDraUrlContext *discovery_url, const 
 
 // Creates a URL context with a discovery URL to use for a given cpid and environment for a specific discovery host
 // Free the returned URL with iotcl_dra_url_deinit() if the function returns success
-int iotcl_dra_discovery_init_url_with_host(IotclDraUrlContext *discovery_url, char *host, const char *cpid, const char *env);
+int iotcl_dra_discovery_init_url_with_host(IotclDraUrlContext *discovery_url, const char *host, const char *cpid, const char *env);
 
 // Parse a discovery json response and return a base url to use with iotcl_dra_url.h
 // Free the returned URL with iotcl_dra_url_deinit() when done with it if the function returns success.

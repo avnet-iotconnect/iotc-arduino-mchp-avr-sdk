@@ -51,7 +51,7 @@ int iotcl_dra_url_init_with_slack(IotclDraUrlContext* c, size_t slack, const cha
 
     // add reasonable slack into a buffer so we don't have to reallocate the buffer in most cases
     c->buffer_length = strlen(url) + slack;
-    c->url = iotcl_malloc(c->buffer_length + 1);
+    c->url = (char *) iotcl_malloc(c->buffer_length + 1);
     if (!c->url) {
         c->buffer_length = 0;
         IOTCL_ERROR(IOTCL_ERR_OUT_OF_MEMORY, "DRA URL: Out of memory while allocating the URL buffer!");
@@ -60,7 +60,7 @@ int iotcl_dra_url_init_with_slack(IotclDraUrlContext* c, size_t slack, const cha
     strcpy(c->url, url);
 
     size_t hostname_len = (size_t) (path_start - hostname_start); // pointer difference
-    c->hostname = iotcl_malloc(hostname_len + 1);
+    c->hostname = (char *) iotcl_malloc(hostname_len + 1);
     if (!c->hostname) {
         iotcl_free(c->url);
         c->url = NULL;
@@ -119,7 +119,7 @@ int iotcl_dra_url_use_suffix_path(IotclDraUrlContext *c, const char *suffix) {
     const size_t suffix_len = strlen(suffix);
     if (c->buffer_length - c->idx_suffix_start < suffix_len) {
         const size_t new_buffer_len = c->idx_suffix_start + suffix_len;
-        char * new_url = iotcl_malloc(new_buffer_len + 1);
+        char * new_url = (char *) iotcl_malloc(new_buffer_len + 1);
         if (!new_url) {
             IOTCL_ERROR(IOTCL_ERR_OUT_OF_MEMORY, "DRA URL: Out of memory while reallocating the buffer for suffix %s", suffix);
             return IOTCL_ERR_OUT_OF_MEMORY;

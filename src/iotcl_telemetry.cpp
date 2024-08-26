@@ -24,10 +24,11 @@ static int setup_data_set_object(const char *function_name, IotclMessageHandle m
     cJSON *current_data_set = NULL;
     cJSON *array_item = cJSON_CreateObject();
 
-    if (!array_item) goto oom_error;
-
     // used if time_fn is configured
     char time_str_buffer[IOTCL_ISO_TIMESTAMP_STR_LEN + 1] = {0};
+
+    if (!array_item) goto oom_error;
+
 
     // If the user didn't pass the timestamp and time function is configured
     if (!iso_timestamp && iotcl_get_global_config()->time_fn) {
@@ -175,7 +176,7 @@ IotclMessageHandle iotcl_telemetry_create(void) {
         return NULL; // called function will print the error
     }
 
-    struct IotclMessageHandleTag *message = iotcl_malloc(sizeof(struct IotclMessageHandleTag));
+    struct IotclMessageHandleTag *message = (IotclMessageHandleTag *) iotcl_malloc(sizeof(struct IotclMessageHandleTag));
 
     if (!message) {
         IOTCL_ERROR(IOTCL_ERR_OUT_OF_MEMORY, "iotcl_telemetry_create: Out of memory error while allocating message handle!");
@@ -279,11 +280,11 @@ int iotcl_telemetry_set_string(IotclMessageHandle message, const char *path, con
 }
 
 int iotcl_telemetry_set_bool(IotclMessageHandle message, const char *path, bool value) {
-    const char *FUNCTION_NAME = FUNCTION_NAME;
+    const char *FUNCTION_NAME = "iotcl_telemetry_set_bool";
     const char *leaf_name = NULL;
     cJSON *parent_object = NULL;
     int status = iotcl_telemetry_set_functions_common(
-            "iotcl_telemetry_set_bool",
+            FUNCTION_NAME,
             &parent_object,
             &leaf_name,
             message,

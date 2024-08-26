@@ -121,7 +121,7 @@ int iotcl_init(IotclClientConfig *c) {
 
     char *p; // "that last string allocated" - shortcut for OOM checks and sprintfs
     if (is_shared) {
-        p = config.mqtt_config.client_id = iotcl_malloc(strlen(c->device.duid) + strlen(c->device.cpid) + 1);
+        p = config.mqtt_config.client_id = (char *) iotcl_malloc(strlen(c->device.duid) + strlen(c->device.cpid) + 1);
         if (!p) goto cleanup_print_oom;
         strcpy(p, c->device.cpid);
         strcat(p, "-");
@@ -136,11 +136,11 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
     }
 
-    config.mqtt_config.version = IOTCL_PROTOCOL_VERSION_DEFAULT;
+    config.mqtt_config.version = iotcl_strdup(IOTCL_PROTOCOL_VERSION_DEFAULT);
 
     if (is_azure) {
         // we use snprintf with null to calculate buffer size
-        p = config.mqtt_config.username = iotcl_malloc(
+        p = config.mqtt_config.username = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0, IOTCL_AZURE_USERNAME_FORMAT,
                              config.mqtt_config.host,
                              config.mqtt_config.client_id
@@ -149,7 +149,7 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
         sprintf(p, IOTCL_AZURE_USERNAME_FORMAT, config.mqtt_config.host, config.mqtt_config.client_id);
 
-        p = config.mqtt_config.pub_rpt = iotcl_malloc(
+        p = config.mqtt_config.pub_rpt = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0, IOTCL_AZURE_PUB_RPT_FORMAT,
                              config.mqtt_config.host,
                              config.mqtt_config.client_id
@@ -158,7 +158,7 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
         sprintf(p, IOTCL_AZURE_PUB_RPT_FORMAT, config.mqtt_config.client_id, c->device.cd);
 
-        p = config.mqtt_config.pub_ack = iotcl_malloc(
+        p = config.mqtt_config.pub_ack = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0, IOTCL_AZURE_PUB_ACK_FORMAT,
                              config.mqtt_config.client_id,
                              c->device.cd
@@ -167,7 +167,7 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
         sprintf(p, IOTCL_AZURE_PUB_ACK_FORMAT, config.mqtt_config.client_id, c->device.cd);
 
-        p = config.mqtt_config.sub_c2d = iotcl_malloc(
+        p = config.mqtt_config.sub_c2d = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0, IOTCL_AZURE_SUB_C2D_FORMAT,
                              config.mqtt_config.client_id
                 )
@@ -179,7 +179,7 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
 
     } else {
-        p = config.mqtt_config.pub_rpt = iotcl_malloc(
+        p = config.mqtt_config.pub_rpt = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0, IOTCL_AWS_PUB_RPT_FORMAT,
                              config.mqtt_config.client_id
                 )
@@ -187,7 +187,7 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
         sprintf(p, IOTCL_AWS_PUB_RPT_FORMAT, config.mqtt_config.client_id);
 
-        p = config.mqtt_config.pub_ack = iotcl_malloc(
+        p = config.mqtt_config.pub_ack = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0,IOTCL_AWS_PUB_ACK_FORMAT,
                              config.mqtt_config.client_id
                 )
@@ -195,7 +195,7 @@ int iotcl_init(IotclClientConfig *c) {
         if (!p) goto cleanup_print_oom;
         sprintf(p, IOTCL_AWS_PUB_ACK_FORMAT, config.mqtt_config.client_id);
 
-        p = config.mqtt_config.sub_c2d = iotcl_malloc(
+        p = config.mqtt_config.sub_c2d = (char *) iotcl_malloc(
                 1 + (size_t) snprintf(NULL, 0, IOTCL_AWS_SUB_C2D_FORMAT,
                              config.mqtt_config.client_id
                 )
@@ -239,7 +239,7 @@ void iotcl_deinit(void) {
     iotcl_free(config.mqtt_config.pub_ack);
     iotcl_free(config.mqtt_config.sub_c2d);
     iotcl_free(config.mqtt_config.cd);
-    // config.mqtt_config.version is a constant string always in this implementation
+    iotcl_free(config.mqtt_config.version);
 
     // config.is_valid = false; after memset
     memset(&config, 0, sizeof(config));
