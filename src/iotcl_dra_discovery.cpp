@@ -12,11 +12,88 @@
 #include "iotcl_dra_url.h"
 #include "iotcl_dra_discovery.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wall"
+
 // NOTE: We assume that v2.1 in the API is not directly tied to the protocol version
 #define IOTCL_DRA_DISCOVERY_URL_FORMAT "https://%s/api/v2.1/dsdk/cpId/%s/env/%s"
 
 static int iotcl_dra_parse_discovery_json(IotclDraUrlContext *base_url_context, size_t base_url_slack, cJSON *json_root) {
-    const char *f;
+    const char *f = "UNKNOWN";
+#if 0
+    // these should not be forward declared nor initializaed. Can't figure how to deal with warnings
+    // without nesting scopes into 10 levels
+    cJSON *j_status = NULL;
+    cJSON *j_message = NULL;
+    cJSON *j_d = NULL;
+    cJSON *j_ec = NULL;
+    cJSON *j_bu = NULL;
+    char *message = NULL;
+    int status;
+
+
+    if (!json_root) {
+        IOTCL_ERROR(IOTCL_ERR_PARSING_ERROR, "DRA Discovery: Parsing error or ran out of memory while parsing response!");
+        return IOTCL_ERR_PARSING_ERROR;
+    }
+
+    f = "status";
+    j_status = cJSON_GetObjectItem(json_root, f);
+    if (!j_status || !cJSON_IsNumber(j_status)) goto cleanup;
+
+    int response_status = (int) cJSON_GetNumberValue(j_status);
+    if (200 != response_status) {
+        IOTCL_ERROR(IOTCL_ERR_BAD_VALUE, "DRA Discovery: Received status %d! Incorrect environment name?", response_status);
+        return IOTCL_ERR_BAD_VALUE;
+    }
+
+    f = "message";
+    j_message = cJSON_GetObjectItem(json_root, f);
+    if (!j_message || !cJSON_IsString(j_message)) {
+        goto cleanup;
+    } else {
+        message = cJSON_GetStringValue(j_message);
+    }
+
+    f = "d";
+    j_d = cJSON_GetObjectItem(json_root, f);
+    if (!j_d || !cJSON_IsObject(j_d)) goto cleanup;
+
+    f = "ec";
+    j_ec = cJSON_GetObjectItem(j_d, f);
+    if (!j_ec || !cJSON_IsNumber(j_ec)) goto cleanup;
+    int ec = (int) cJSON_GetNumberValue(j_ec);
+
+#ifdef IOTCL_DRA_DISCOVERY_IGNORE_SUBSCRIPTION_EXPIRED
+    // Related service ticket https://awspoc.iotconnect.io/support-info/2024031415124727
+    if (3 == ec) {
+        IOTCL_WARN(IOTCL_ERR_FAILED, "DRA Discovery: Received error %d! Server message was: \"%s\". Ignoring...", ec, message);
+        ec = 0; // ignore this error
+    }
+#endif
+
+    if (0 != ec) {
+        IOTCL_ERROR(IOTCL_ERR_FAILED, "DRA Discovery: Received error %d! Server message was: \"%s\"", ec, message);
+        return IOTCL_ERR_BAD_VALUE;
+    }
+
+    f = "bu";
+    j_bu = cJSON_GetObjectItem(j_d, f);
+    if (!j_bu || !cJSON_IsString(j_bu)) goto cleanup;
+
+    status = iotcl_dra_url_init_with_slack(base_url_context, base_url_slack, cJSON_GetStringValue(j_bu));
+    if (IOTCL_SUCCESS != status) {
+        // the called function will print the error, but we need to be more specific, though return the original cause
+        IOTCL_ERROR(IOTCL_ERR_FAILED, "DRA: Unable to initialize base URL from discovery response!");
+        return status;
+    }
+
+    return IOTCL_SUCCESS;
+
+    cleanup:
+    IOTCL_ERROR(IOTCL_ERR_PARSING_ERROR, "DRA: Error encountered while parsing the discovery response field \"%s\"", f);
+    return IOTCL_ERR_PARSING_ERROR;
+#endif
 
     if (!json_root) {
         IOTCL_ERROR(IOTCL_ERR_PARSING_ERROR, "DRA Discovery: Parsing error or ran out of memory while parsing response!");
@@ -80,7 +157,10 @@ static int iotcl_dra_parse_discovery_json(IotclDraUrlContext *base_url_context, 
     cleanup:
     IOTCL_ERROR(IOTCL_ERR_PARSING_ERROR, "DRA: Error encountered while parsing the discovery response field \"%s\"", f);
     return IOTCL_ERR_PARSING_ERROR;
+
 }
+
+
 
 int iotcl_dra_discovery_init_url_with_host(IotclDraUrlContext *c, char *host, const char *cpid, const char *env) {
     if (!host || !cpid || !env || 0 == strlen(host) || 0 == strlen(cpid) || 0 == strlen(env)) {
@@ -120,3 +200,5 @@ int iotcl_dra_discovery_parse_with_length(IotclDraUrlContext *c, int base_url_sl
     cJSON_Delete(root);
     return status;
 }
+
+#pragma GCC diagnostic pop

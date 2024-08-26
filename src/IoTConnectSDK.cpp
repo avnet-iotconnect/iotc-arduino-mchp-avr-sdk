@@ -1,27 +1,28 @@
-//
-// Copyright: Avnet, Softweb Inc. 2023
-// Modified by Nik Markovic <nikola.markovic@avnet.com> on 6/24/21.
-//
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2020 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
 
 #include <string.h>
 #include <Arduino.h>
 #include "log.h"
-#include "iotconnect_lib.h"
-#include "iotconnect_telemetry.h"
-#include "iotconnect_discovery.h"
+
+#include "iotcl.h"
+#include "iotcl_util.h"
+#include "iotcl_dra_discovery.h"
+#include "iotcl_dra_identity.h"
 #include "iotc_time.h"
 #include "iotc_http_request.h"
 #include "iotc_mqtt_client.h"
 #include "IoTConnectSDK.h"
 
-#define HTTP_DISCOVERY_PATH_FORMAT "/api/sdk/cpid/%s/lang/M_C/ver/2.0/env/%s"
-
-static IotclConfig lib_config = {0};
-static IotConnectClientConfig config = {0};
+static bool is_verbose = false;
 static IotConnectMqttClientConfig mqtt_config = {0};
 
 static void dump_response(const char *message, IotConnectHttpResponse *response) {
-    Log.infof("%s:\r\n", message);
+    if (message) {
+        Log.infof("%s:\r\n", message);
+    }
     if (response->data) {
         Log.infof(F(" Response was:\r\n----\r\n%s\r\n----\r\n"), response->data);
     } else {
@@ -29,157 +30,122 @@ static void dump_response(const char *message, IotConnectHttpResponse *response)
     }
 }
 
-static void report_sync_error(IotclSyncResponse *response, const char *sync_response_str) {
-    if (NULL == response) {
-        Log.error(F("Failed to obtain sync response"));
-        return;
+static int validate_response(IotConnectHttpResponse *response) {
+    if (NULL == response->data) {
+        dump_response("Unable to parse HTTP response.", response);
+        return IOTCL_ERR_PARSING_ERROR;
     }
-    switch (response->ds) {
-        case IOTCL_SR_DEVICE_NOT_REGISTERED:
-            Log.error(F("IOTC_SyncResponse error: Not registered"));
+    const char *json_start = strstr(response->data, "{");
+    if (NULL == json_start) {
+        dump_response("No json response from server.", response);
+        return IOTCL_ERR_PARSING_ERROR;
+    }
+    if (json_start != response->data) {
+        dump_response("WARN: Expected JSON to start immediately in the returned data.", response);
+    }
+    return IOTCL_SUCCESS;
+}
+
+static int run_http_identity(IotConnectConnectionType ct, const char* duid, const char *cpid, const char *env) {
+    IotConnectHttpResponse response = {0};
+    IotclDraUrlContext discovery_url = {0};
+    IotclDraUrlContext identity_url = {0};
+    int status;
+    switch (ct) {
+        case IOTC_CT_AWS:
+        	// TEMPORARY HACK UNTIL WE SORT OUT DISCOVERY URL
+        	// Shortcut to avoid full case insensitive match.
+        	// Hopefully the user doesn't enter something with mixed case
+        	if (0 == strcmp("POC", env) || 0 == strcmp("poc", env)) {
+                status = iotcl_dra_discovery_init_url_with_host(&discovery_url, (char *) "awsdiscovery.iotconnect.io", cpid, env);
+        	} else {
+                status = iotcl_dra_discovery_init_url_with_host(&discovery_url, (char *) "discoveryconsole.iotconnect.io", cpid, env);
+        	}
+        	if (IOTCL_SUCCESS == status) {
+            	printf("Using AWS discovery URL %s\n", iotcl_dra_url_get_url(&discovery_url));
+        	}
             break;
-        case IOTCL_SR_AUTO_REGISTER:
-            Log.error(F("IOTC_SyncResponse error: Auto Register"));
-            break;
-        case IOTCL_SR_DEVICE_NOT_FOUND:
-            Log.error(F("IOTC_SyncResponse error: Device not found"));
-            break;
-        case IOTCL_SR_DEVICE_INACTIVE:
-            Log.error(F("IOTC_SyncResponse error: Device inactive"));
-            break;
-        case IOTCL_SR_DEVICE_MOVED:
-            Log.error(F("IOTC_SyncResponse error: Device moved"));
-            break;
-        case IOTCL_SR_CPID_NOT_FOUND:
-            Log.error(F("IOTC_SyncResponse error: CPID not found"));
-            break;
-        case IOTCL_SR_UNKNOWN_DEVICE_STATUS:
-            Log.error(F("IOTC_SyncResponse error: Unknown device status error from server"));
-            break;
-        case IOTCL_SR_ALLOCATION_ERROR:
-            Log.error(F("IOTC_SyncResponse internal error: Allocation Error"));
-            break;
-        case IOTCL_SR_PARSING_ERROR:
-            Log.error(F("IOTC_SyncResponse internal error: Parsing error. Please check parameters passed to the request."));
+        case IOTC_CT_AZURE:
+            status = iotcl_dra_discovery_init_url_azure(&discovery_url, cpid, env);
+        	if (IOTCL_SUCCESS == status) {
+            	printf("Using Azure discovery URL %s\n", iotcl_dra_url_get_url(&discovery_url));
+        	}
             break;
         default:
-            Log.warn(F("WARN: report_sync_error called, but no error returned?"));
-            break;
+        printf("Unknown connection type %d\n", ct);
+            return IOTCL_ERR_BAD_VALUE;
     }
-    Log.errorf(F("Raw server response was:\r\n--------------\r\n%s\r\n--------------\r\n"), sync_response_str);
-}
 
-static IotclDiscoveryResponse *run_http_discovery(const char *cpid, const char *env) {
-    char *json_start = NULL;
-    IotclDiscoveryResponse *ret = NULL;
-    char *path_buff = (char *) malloc(sizeof(HTTP_DISCOVERY_PATH_FORMAT) +
-                            strlen(cpid) +
-                            strlen(env)/* %s x 2 */
+    if (status) {
+        return status; // called function will print the error
+    }
+
+    iotconnect_https_request(&response,
+                             iotcl_dra_url_get_hostname(&discovery_url),
+							 iotcl_dra_url_get_resource(&discovery_url),
+							 NULL
     );
 
-    sprintf(path_buff, HTTP_DISCOVERY_PATH_FORMAT, cpid, env);
+    status = validate_response(&response);
+    if (status) goto cleanup; // called function will print the error
 
-    IotConnectHttpResponse response = {0};
 
-    iotconnect_https_request(
-        &response,
-        IOTCONNECT_DISCOVERY_HOSTNAME,
-        path_buff,
-        NULL
-    );
-
-    free(path_buff);
-
-    if (NULL == response.data) {
-        dump_response("Unable to parse HTTP response", &response);
+    status = iotcl_dra_discovery_parse(&identity_url, 0, response.data);
+    if (status) {
+        printf("Error while parsing discovery response from %s\n", iotcl_dra_url_get_url(&discovery_url));
+        dump_response(NULL, &response);
         goto cleanup;
     }
-    json_start = strstr(response.data, "{");
-    if (NULL == json_start) {
-        dump_response("No json response from server", &response);
-        goto cleanup;
-    }
-    if (json_start != response.data) {
-        dump_response("WARN: Expected JSON to start immediately in the returned data", &response);
-    }
 
-    ret = iotcl_discovery_parse_discovery_response(json_start);
-    if (!ret) {
-        Log.errorf(F("Error: Unable to get discovery response for environment \"%s\"."
-            "Please check the environment name in the key vault.\r\n"),
-            env
-        );
-    }
-
-    // fall through
-    cleanup:
     iotconnect_free_https_response(&response);
-    return ret;
-}
+    memset(&response, 0, sizeof(response));
 
-static IotclSyncResponse *run_http_sync(IotclDiscoveryResponse* dr, const char *cpid, const char *uniqueid) {
-    char *json_start = NULL;
-    IotclSyncResponse *ret = NULL;
-    char *post_data = (char *)malloc(IOTCONNECT_DISCOVERY_PROTOCOL_POST_DATA_MAX_LEN + 1);
+    status = iotcl_dra_identity_build_url(&identity_url, duid);
+    if (status) goto cleanup; // called function will print the error
 
-    if (!post_data) {
-        Log.error(F("run_http_sync: Out of memory!"));
-        return NULL;
-    }
-
-    snprintf(post_data,
-             IOTCONNECT_DISCOVERY_PROTOCOL_POST_DATA_MAX_LEN, /*total length should not exceed MTU size*/
-             IOTCONNECT_DISCOVERY_PROTOCOL_POST_DATA_TEMPLATE,
-             cpid,
-             uniqueid
+    iotconnect_https_request(&response,
+                             iotcl_dra_url_get_hostname(&identity_url),
+							 iotcl_dra_url_get_resource(&identity_url),
+							 NULL
     );
 
-    char * path = (char *) malloc(strlen(dr->path) + 5 /* "sync?" */ + 1/* null*/);
-    strcpy(path, dr->path);
-    strcat(path, "sync?");
-    IotConnectHttpResponse response = {0};
-    iotconnect_https_request(
-        &response,
-        dr->host,
-        path,
-        post_data
-    );
+    status = validate_response(&response);
+    if (status) goto cleanup; // called function will print the error
 
-    free(path);
-    free(post_data);
-
-    if (NULL == response.data) {
-        dump_response("Unable to parse HTTP response", &response);
+    status = iotcl_dra_identity_configure_library_mqtt(response.data);
+    if (status) {
+        printf("Error while parsing identity response from %s\n", iotcl_dra_url_get_url(&identity_url));
+        dump_response(NULL, &response);
         goto cleanup;
     }
-    json_start = strstr(response.data, "{");
-    if (NULL == json_start) {
-        dump_response("No json response from server", &response);
-        goto cleanup;
-    }
-    if (json_start != response.data) {
-        dump_response("WARN: Expected JSON to start immediately in the returned data", &response);
-    }
 
-    ret = iotcl_discovery_parse_sync_response(json_start);
-    if (!ret || ret->ds != IOTCL_SR_OK) {
-        report_sync_error(ret, response.data);
-        iotcl_discovery_free_sync_response(ret);
-        ret = NULL;
+    if (ct == IOTC_CT_AWS && iotcl_mqtt_get_config()->username) {
+        // workaround for identity returning username for AWS.
+        // https://awspoc.iotconnect.io/support-info/2024036163515369
+        iotcl_free(iotcl_mqtt_get_config()->username);
+        iotcl_mqtt_get_config()->username = NULL;
     }
 
     cleanup:
+    iotcl_dra_url_deinit(&discovery_url);
+    iotcl_dra_url_deinit(&identity_url);
     iotconnect_free_https_response(&response);
-    // fall through
-
-    return ret;
+    return status;
 }
 
-static void on_mqtt_c2d_message(const char* message) {
-    Log.infof(F("event>>> %s"), message);
-    if (!iotcl_process_event(message)) {
-        Log.error(F("Error encountered while processing the message"));
+static void iotconnect_sdk_mqtt_send_cb(const char *topic, const char *json_str) {
+    if (is_verbose) {
+        Log.infof(F(">: %s\n"), json_str);
     }
+    iotc_mqtt_client_send_message(topic, json_str);
+}
+
+
+static void on_mqtt_message(const char* message) {
+    if (is_verbose) {
+        Log.infof(F("event>>> %s"), message);
+    }
+    iotcl_c2d_process_event(message);
 }
 
 void iotconnect_sdk_disconnect(void) {
@@ -191,36 +157,6 @@ bool iotconnect_sdk_is_connected(void) {
     return iotc_mqtt_client_is_connected();
 }
 
-IotConnectClientConfig *iotconnect_sdk_init_and_get_config() {
-    memset(&config, 0, sizeof(config));
-    return &config;
-}
-
-IotclConfig *iotconnect_sdk_get_lib_config(void) {
-    return iotcl_get_config();
-}
-
-static void on_message_intercept(IotclEventData data, IotConnectEventType type) {
-    switch (type) {
-        case ON_FORCE_SYNC:
-            Log.info(F("Got ON_FORCE_SYNC. Disconnecting."));
-            iotconnect_sdk_disconnect(); // client will get notification that we disconnected and will reinit
-
-        case ON_CLOSE:
-            Log.info(F("Got a disconnect request. Closing the mqtt connection. Device restart is required."));
-            iotconnect_sdk_disconnect();
-        default:
-            break; // not handling nay other messages
-    }
-
-    if (NULL != config.msg_cb) {
-        config.msg_cb(data, type);
-    }
-}
-
-bool iotconnect_sdk_send_packet(const char *data) {
-    return iotc_mqtt_client_send_message(data);
-}
 
 void iotconnect_sdk_loop(void) {
     return iotc_mqtt_client_loop();
@@ -228,58 +164,46 @@ void iotconnect_sdk_loop(void) {
 
 ///////////////////////////////////////////////////////////////////////////////////
 // this the Initialization os IoTConnect SDK
-bool iotconnect_sdk_init(void) {
-    if (!config.cpid || !config.env || !config.duid) {
+bool iotconnect_sdk_init(IotConnectClientConfig *c) {
+    int status;
+
+    if (!c->cpid || !c->env || !c->duid) {
         Log.error(F("CPID, Environment and DUID are required for iotconnect_sdk_init()"));
         return false;
     }
-    if (mqtt_config.sr) {
-        iotcl_discovery_free_sync_response(mqtt_config.sr);
-        mqtt_config.sr = NULL;
-    }
 
-    IotclDiscoveryResponse *discovery_response = run_http_discovery(config.cpid, config.env);
-    if (NULL == discovery_response) {
-        // run_http_discovery will print the error
-        return false;
-    }
-    IotclSyncResponse *sr = run_http_sync(discovery_response, config.cpid, config.duid);
-    iotcl_discovery_free_discovery_response(discovery_response); // we no longer need it
-    if (NULL == sr) {
-        // run_http_sync will print the error
-        return false;
-    }
-    mqtt_config.sr = sr;
-    lib_config.device.env = config.env;
-    lib_config.device.cpid = config.cpid;
-    lib_config.device.duid = config.duid;
+    is_verbose = c->verbose;
+
+    IotclClientConfig iotcl_cfg;
+    iotcl_init_client_config(&iotcl_cfg);
+    iotcl_cfg.device.cpid = c->cpid;
+    iotcl_cfg.device.duid = c->duid;
+    iotcl_cfg.device.instance_type = IOTCL_DCT_CUSTOM; //we will use discovery, so CUSTOM
+    iotcl_cfg.mqtt_send_cb = iotconnect_sdk_mqtt_send_cb;
+    iotcl_cfg.events.cmd_cb = c->cmd_cb;
+    iotcl_cfg.events.ota_cb = c->ota_cb;
 
     iotc_get_time_modem();
 
-    if (!config.env || !config.cpid || !config.duid) {
-        Log.error(F("Error: Device configuration is invalid. Configuration values for env, cpid and duid are required."));
+    if (c->verbose) {
+        status = iotcl_init_and_print_config(&iotcl_cfg);
+    } else {
+        status = iotcl_init(&iotcl_cfg);
+    }
+    if (status) {
+        // called function will print the error
         return false;
     }
 
-    lib_config.event_functions.ota_cb = config.ota_cb;
-    lib_config.event_functions.cmd_cb = config.cmd_cb;
-    lib_config.event_functions.msg_cb = on_message_intercept;
-
-    lib_config.telemetry.dtg = sr->dtg;
-
-    char cpid_buff[5];
-    strncpy(cpid_buff, config.cpid, 4);
-    cpid_buff[4] = 0;
-    Log.infof(F("CPID: %s***\r\n"), cpid_buff);
-    Log.infof(F("ENV:  %s\r\n"), config.env);
-
-    if (!iotcl_init(&lib_config)) {
-        Log.error(F("Error: Failed to initialize the IoTConnect Lib"));
+	status = run_http_identity(c->connection_type, c->duid, c->cpid, c->env);
+    if (status) {
+		iotcl_deinit();
         return false;
     }
+    Log.info("Identity response parsing successful.");
 
-    mqtt_config.status_cb = config.status_cb;
-    mqtt_config.c2d_msg_cb = on_mqtt_c2d_message;
+    mqtt_config.status_cb = c->status_cb;
+    mqtt_config.c2d_msg_cb = on_mqtt_message;
     if (!iotc_mqtt_client_init(&mqtt_config)) {
         Log.error(F("Failed to connect!"));
         return false;

@@ -1,5 +1,7 @@
-#ifndef IOTC_ECC608_H
-#define IOTC_ECC608_H
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2020 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
 
 /*
   (c) 2022 Microchip Technology Inc. and its subsidiaries.
@@ -24,10 +26,8 @@
 */
 
 
-//
-// Copyright: Avnet 2023
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 5/16/23.
-//
+#ifndef IOTC_ECC608_H
+#define IOTC_ECC608_H
 
 #include "ecc608.h"
 #include "cryptoauthlib/app/tng/tng_atcacert_client.h"

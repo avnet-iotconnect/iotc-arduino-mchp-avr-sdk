@@ -11,6 +11,7 @@
 #include "iotcl_util.h"
 #include "iotcl.h"
 #include "iotcl_c2d.h"
+#include "iotcl_cfg.h"
 
 #define HTTPS_PREFIX "https://"
 

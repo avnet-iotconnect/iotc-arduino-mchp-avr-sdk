@@ -11,6 +11,8 @@
 #if defined(IOTCL_USER_CONFIG_FILE)
 #include IOTCL_USER_CONFIG_FILE
 #endif
+// iotc-c-lib hack for Arduino:
+#include "iotcl_arduino_log_cfg.h"
 
 #ifdef __cplusplus
 extern "C" {

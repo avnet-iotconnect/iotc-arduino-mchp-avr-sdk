@@ -1,7 +1,8 @@
-//
-// Copyright: Avnet 2023
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 4/5/23.
-//
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2024 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
+
 
 #include <stdlib.h>
 #include <string.h>

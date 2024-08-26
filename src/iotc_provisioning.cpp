@@ -1,3 +1,8 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2020 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
+
 /*
   (c) 2022 Microchip Technology Inc. and its subsidiaries.
 
@@ -20,10 +25,6 @@
   YOU PAID DIRECTLY TO MICROCHIP FOR THIS SOFTWARE.
 */
 
-//
-// Copyright: Avnet, Microchip Technology Inc 2023
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 5/22/23.
-//
 
 #include <Arduino.h>
 #include <log.h>

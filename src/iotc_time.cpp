@@ -1,6 +1,6 @@
-/**
- * @brief This example demonstrates how to retrieve the unix time from a NTP
- * server.
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2020 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
  */
 
 #include <time.h>
