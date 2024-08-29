@@ -8,30 +8,30 @@
 #include <Arduino.h>
 #include "log.h"
 
-#ifndef IOTCL_ENDLN
-#define IOTCL_ENDLN "\r\n"
+#ifdef IOTCL_ENDLN
+#undef IOTCL_ENDLN
 #endif
-
-#define IOTCL_LEVEL_ERROR 0
-#define IOTCL_LEVEL_WARN  1
-#define IOTCL_LEVEL_INFO  2
-
-
-void iotcl_arduino_log(int level, int err_code, const __FlashStringHelper* format, ...);
+#define IOTCL_ENDLN F("\r\n")
 
 #define IOTCL_ERROR(err_code, fmt, ...) \
     do { \
-        iotcl_arduino_log(IOTCL_LEVEL_ERROR, err_code, F(fmt), ## __VA_ARGS__); \
+            Log.errorf(F("IOTCL [%d]: "), err_code); \
+            Log.rawf(F(fmt), ## __VA_ARGS__); \
+            Log.rawf(IOTCL_ENDLN); \
     } while(0)
 
 #define IOTCL_WARN(err_code, fmt, ...) \
     do { \
-        iotcl_arduino_log(IOTCL_LEVEL_WARN, err_code, F(fmt), ## __VA_ARGS__); \
+            Log.warnf(F("IOTCL [%d]: "), err_code); \
+            Log.rawf(F(fmt), ## __VA_ARGS__); \
+            Log.rawf(IOTCL_ENDLN); \
     } while(0)
 
 #define IOTCL_INFO(fmt, ...) \
     do { \
-        iotcl_arduino_log(IOTCL_LEVEL_INFO, 0, F(fmt), ## __VA_ARGS__); \
+            Log.infof(F("IOTCL: ")); \
+            Log.rawf(F(fmt), ## __VA_ARGS__); \
+            Log.rawf(IOTCL_ENDLN); \
     } while(0)
 
 
