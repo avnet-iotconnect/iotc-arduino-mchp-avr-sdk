@@ -1,11 +1,20 @@
 # About
 
-This document is provided to describe th steps needed to integrate the iotc-c-lib into the project
-ino order to assist with future integration of iotc-c-lib updates.
+This internal document is provided to describe th steps needed to integrate the iotc-c-lib and make other changes 
+to the existing files to make them work in the Arduino AVR environment.
 
-# Integration Steps
+# AVR Library Changes
 
-### Drop files directly into src
+iotc_http_request.cpp has an added function fixed_http_client_read_body(), which is 
+a patched version http_request.c HttpClient::readBody so that it handles SQNHTTPRCV properly when returning ERROR 
+when there is no data from the sever. If ERROR is received, -2 will be retruned and the main fetch loop should break.
+
+There are some buffer and fetch size related changes to accommodate for smaller chunks.
+
+
+# C-Lib Integration Steps
+
+### Drop c-lib files directly into src
 Since the Arduino environment is not flexible enough, we have to drop raw iotc-c-lib files from 
 the core and device-rest api module into the SDK directly. 
 
