@@ -180,22 +180,22 @@ void setup() {
     return; // caller will print the error
   }
 
-  IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
-  if (!load_provisioned_data(config)) {
+  IotConnectClientConfig config = {0};
+  if (!load_provisioned_data(&config)) {
       Log.info("Invalid provisioning data. Please provide the device IoTConnect configuraton.");
   }
 
   SerialModule.printf("\r\nCurrent provisioning data:\r\n");
-  print_string_or_default("CPID\t\t", config->cpid, "[EMPTY]");
-  print_string_or_default("Environment\t", config->env, "[EMPTY]");
-  print_string_or_default("Device Uinque ID", config->duid, duid_from_serial_buf);
+  print_string_or_default("CPID\t\t", config.cpid, "[EMPTY]");
+  print_string_or_default("Environment\t", config.env, "[EMPTY]");
+  print_string_or_default("Device Uinque ID", config.duid, duid_from_serial_buf);
 
-  while (!provision_from_user_input(config)) {};
+  while (!provision_from_user_input(&config)) {};
 
   SerialModule.printf("New provisioning data:\r\n");
-  print_string_or_default("CPID", config->cpid, "[EMPTY]");
-  print_string_or_default("Environment", config->env, "[EMPTY]");
-  print_string_or_default("Device Uinque ID", config->duid, duid_from_serial_buf);
+  print_string_or_default("CPID", config.cpid, "[EMPTY]");
+  print_string_or_default("Environment", config.env, "[EMPTY]");
+  print_string_or_default("Device Uinque ID", config.duid, duid_from_serial_buf);
 
   Log.info("========= Provisioning Complete =========");
 }
