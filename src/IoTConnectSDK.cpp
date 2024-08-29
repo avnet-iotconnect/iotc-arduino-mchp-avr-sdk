@@ -21,12 +21,12 @@ static IotConnectMqttClientConfig mqtt_config = {0};
 
 static void dump_response(const char *message, IotConnectHttpResponse *response) {
     if (message) {
-        Log.infof("%s:\r\n", message);
+        Log.infof(F("%s:\n"), message);
     }
     if (response->data) {
-        Log.infof(F(" Response was:\r\n----\r\n%s\r\n----\r\n"), response->data);
+        Log.infof(F("Response was:\n----\n%s\r\n----\r\n"), response->data);
     } else {
-        Log.infof(F(" Response was empty\r\n"));
+        Log.infof(F("Response was empty\r\n"));
     }
 }
 
@@ -62,17 +62,17 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
                 status = iotcl_dra_discovery_init_url_with_host(&discovery_url, (char *) "discoveryconsole.iotconnect.io", cpid, env);
         	}
         	if (IOTCL_SUCCESS == status) {
-            	printf("Using AWS discovery URL %s\n", iotcl_dra_url_get_url(&discovery_url));
+            	Log.infof(F("Using AWS discovery URL %s\n"), iotcl_dra_url_get_url(&discovery_url));
         	}
             break;
         case IOTC_CT_AZURE:
             status = iotcl_dra_discovery_init_url_azure(&discovery_url, cpid, env);
         	if (IOTCL_SUCCESS == status) {
-            	printf("Using Azure discovery URL %s\n", iotcl_dra_url_get_url(&discovery_url));
+            	Log.infof(F("Using Azure discovery URL %s\n"), iotcl_dra_url_get_url(&discovery_url));
         	}
             break;
         default:
-        printf("Unknown connection type %d\n", ct);
+            Log.infof(F("Unknown connection type %d\n"), ct);
             return IOTCL_ERR_BAD_VALUE;
     }
 
@@ -80,11 +80,13 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
         return status; // called function will print the error
     }
 
-    iotconnect_https_request(&response,
+    if (iotconnect_https_request(&response,
                              iotcl_dra_url_get_hostname(&discovery_url),
 							 iotcl_dra_url_get_resource(&discovery_url),
 							 NULL
-    );
+    )) {
+        goto cleanup;
+    }
 
     status = validate_response(&response);
     if (status) goto cleanup; // called function will print the error
@@ -92,7 +94,7 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
 
     status = iotcl_dra_discovery_parse(&identity_url, 0, response.data);
     if (status) {
-        printf("Error while parsing discovery response from %s\n", iotcl_dra_url_get_url(&discovery_url));
+        Log.errorf(F("Error while parsing discovery response from %s\n"), iotcl_dra_url_get_url(&discovery_url));
         dump_response(NULL, &response);
         goto cleanup;
     }
@@ -103,18 +105,20 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
     status = iotcl_dra_identity_build_url(&identity_url, duid);
     if (status) goto cleanup; // called function will print the error
 
-    iotconnect_https_request(&response,
+    if(iotconnect_https_request(&response,
                              iotcl_dra_url_get_hostname(&identity_url),
 							 iotcl_dra_url_get_resource(&identity_url),
 							 NULL
-    );
+    )) {
+        goto cleanup;
+    }
 
     status = validate_response(&response);
     if (status) goto cleanup; // called function will print the error
 
     status = iotcl_dra_identity_configure_library_mqtt(response.data);
     if (status) {
-        printf("Error while parsing identity response from %s\n", iotcl_dra_url_get_url(&identity_url));
+        Log.errorf(F("Error while parsing identity response from %s\n"), iotcl_dra_url_get_url(&identity_url));
         dump_response(NULL, &response);
         goto cleanup;
     }
@@ -200,7 +204,7 @@ bool iotconnect_sdk_init(IotConnectClientConfig *c) {
 		iotcl_deinit();
         return false;
     }
-    Log.info("Identity response parsing successful.");
+    Log.info(F("Identity response parsing successful."));
 
     mqtt_config.status_cb = c->status_cb;
     mqtt_config.c2d_msg_cb = on_mqtt_message;
