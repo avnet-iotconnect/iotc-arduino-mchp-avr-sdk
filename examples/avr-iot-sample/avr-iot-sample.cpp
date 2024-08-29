@@ -12,9 +12,9 @@
 #include "mqtt_client.h"
 #include "led_ctrl.h"
 #include "veml3328.h"
-#include "IoTConnectSDK.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
+#include "iotconnect.h"
 
 #define APP_VERSION "02.00.00"
 

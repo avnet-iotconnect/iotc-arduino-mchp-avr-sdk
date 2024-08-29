@@ -14,7 +14,7 @@
 #include "iotc_time.h"
 #include "iotc_http_request.h"
 #include "iotc_mqtt_client.h"
-#include "IoTConnectSDK.h"
+#include "iotconnect.h"
 
 static bool is_verbose = false;
 static IotConnectMqttClientConfig mqtt_config = {0};

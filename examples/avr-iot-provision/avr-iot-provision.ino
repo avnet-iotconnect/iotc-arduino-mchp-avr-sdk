@@ -4,7 +4,7 @@
 #include "cryptoauthlib/app/tng/tng_atcacert_client.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
-#include "IoTConnectSDK.h"
+#include "iotconnect.h"
 
 // for user input we are using raw serial
 #define SerialModule Serial3

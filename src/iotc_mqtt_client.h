@@ -7,7 +7,7 @@
 #define IOTC_MQTT_CLIENT_H
 
 #include <Arduino.h>
-#include "IoTConnectSDK.h"
+#include "iotconnect.h"
 
 
 typedef void (*IotConnectC2dCallback)(const char* message);
