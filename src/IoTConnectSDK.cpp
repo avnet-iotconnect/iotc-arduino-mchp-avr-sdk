@@ -61,18 +61,18 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
         	} else {
                 status = iotcl_dra_discovery_init_url_with_host(&discovery_url, (char *) "discoveryconsole.iotconnect.io", cpid, env);
         	}
-        	if (IOTCL_SUCCESS == status) {
+        	if (is_verbose && IOTCL_SUCCESS == status) {
             	Log.infof(F("Using AWS discovery URL %s\n"), iotcl_dra_url_get_url(&discovery_url));
         	}
             break;
         case IOTC_CT_AZURE:
             status = iotcl_dra_discovery_init_url_azure(&discovery_url, cpid, env);
-        	if (IOTCL_SUCCESS == status) {
+        	if (is_verbose && IOTCL_SUCCESS == status) {
             	Log.infof(F("Using Azure discovery URL %s\n"), iotcl_dra_url_get_url(&discovery_url));
         	}
             break;
         default:
-            Log.infof(F("Unknown connection type %d\n"), ct);
+            Log.errorf(F("Unknown connection type %d\n"), ct);
             return IOTCL_ERR_BAD_VALUE;
     }
 
@@ -104,6 +104,10 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
 
     status = iotcl_dra_identity_build_url(&identity_url, duid);
     if (status) goto cleanup; // called function will print the error
+
+    if (is_verbose) {
+        Log.infof(F("Using identity URL %s\n"), iotcl_dra_url_get_url(&identity_url));
+    }
 
     if(iotconnect_https_request(&response,
                              iotcl_dra_url_get_hostname(&identity_url),
@@ -187,13 +191,10 @@ bool iotconnect_sdk_init(IotConnectClientConfig *c) {
     iotcl_cfg.events.cmd_cb = c->cmd_cb;
     iotcl_cfg.events.ota_cb = c->ota_cb;
 
+    status = iotcl_init(&iotcl_cfg);
+
     iotc_get_time_modem();
 
-    if (c->verbose) {
-        status = iotcl_init_and_print_config(&iotcl_cfg);
-    } else {
-        status = iotcl_init(&iotcl_cfg);
-    }
     if (status) {
         // called function will print the error
         return false;
@@ -204,7 +205,9 @@ bool iotconnect_sdk_init(IotConnectClientConfig *c) {
 		iotcl_deinit();
         return false;
     }
-    Log.info(F("Identity response parsing successful."));
+    if (is_verbose) {
+        Log.info(F("Identity response parsing successful."));
+    }
 
     mqtt_config.status_cb = c->status_cb;
     mqtt_config.c2d_msg_cb = on_mqtt_message;
