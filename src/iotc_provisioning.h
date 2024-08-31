@@ -28,9 +28,11 @@
 #ifndef IOTC_PROVISIONING_H
 #define IOTC_PROVISIONING_H
 
+#include "iotconnect.h"
+
 void iotc_prov_init(void);
 
-bool iotc_prov_setup_tls_and_server_certs(void);
+bool iotc_prov_setup_tls_and_server_certs(IotConnectConnectionType type);
 
 void iotc_prov_print_device_certificate(void);
 

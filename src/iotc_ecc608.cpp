@@ -52,8 +52,14 @@ static ATCAIfaceCfg cfg_atecc608b_i2c = {
 // How many bytes will each string have in reserved storaage.
 // Storage content may be arbitrary after the first null terminator.
 
-#define IOTC_ECC608_PROV_DATA_VERSION "v1.0" // Current IOTC_ECC608_PROV_VER. This is internal. User should not use this value.
-#define IOTC_ECC608_PROV_VER_SIZE (sizeof(IOTC_ECC608_PROV_DATA_VERSION))
+// For storage version 1.0, the storage was meant for azure, so just "v1.0"
+// For 2.0 and onward we encode platofrm type into the version and we keep the same size,
+// so 2azr means header version is 2 and platform is azure, and similar for AWS
+// PV = platform and header version
+#define IOTC_ECC608_PROV_DATA_PV_AZURE "2azr"
+#define IOTC_ECC608_PROV_DATA_PV_AWS   "2aws"
+#define IOTC_ECC608_PROV_DATA_PV_1_0   "v1.0" // will convert to IOTC_ECC608_PROV_DATA_PV_AZURE
+#define IOTC_ECC608_PROV_PV_SIZE (sizeof(IOTC_ECC608_PROV_DATA_PV_AZURE))
 
 typedef struct DataHeader {
     uint16_t next : 9; // Offset of next header, up to 512 bytes (slot 8 is 416)
@@ -95,10 +101,10 @@ static DataHeaderUnion* append_iotconnect_blank_record(DataHeaderUnion* h, uint1
 
 // DO NOT call this function if we already have any of these fields
 static void append_iotconnect_blank_records(DataHeaderUnion* start) {
-    start = append_iotconnect_blank_record(start, IOTC_ECC608_PROV_VER,  IOTC_ECC608_PROV_VER_SIZE);
+    start = append_iotconnect_blank_record(start, IOTC_ECC608_PROV_PLATFORM,  IOTC_ECC608_PROV_PV_SIZE);
     start = append_iotconnect_blank_record(start, IOTC_ECC608_PROV_CPID, IOTC_ECC608_PROV_CPID_SIZE);
     start = append_iotconnect_blank_record(start, IOTC_ECC608_PROV_DUID, IOTC_ECC608_PROV_DUID_SIZE);
-    start = append_iotconnect_blank_record(start, IOTC_ECC608_PROV_ENV,  IOTC_ECC608_PROV_ENV_SIZE);
+    start = append_iotconnect_blank_record(start, IOTC_ECC608_PROV_ENV, IOTC_ECC608_PROV_ENV_SIZE);
     start->header.type = EMPTY;
     start->header.next = 0;
 }
@@ -107,7 +113,7 @@ static ATCA_STATUS iotc_ecc608_get_string_value_internal(ecc_data_types data_typ
     DataHeaderUnion* h = (DataHeaderUnion *) data_cache;
     *value = NULL;
     switch (data_type) {
-        case IOTC_ECC608_PROV_VER:
+        case IOTC_ECC608_PROV_PLATFORM:
         case IOTC_ECC608_PROV_ENV:
         case IOTC_ECC608_PROV_CPID:
         case IOTC_ECC608_PROV_DUID:
@@ -132,11 +138,11 @@ static ATCA_STATUS iotc_ecc608_set_string_value_internal(ecc_data_types data_typ
         if (h->header.type == data_type) {
             size_t size = ecchdr_get_data_size(h);
             switch (data_type) {
-                case IOTC_ECC608_PROV_VER:
+                case IOTC_ECC608_PROV_PLATFORM:
                 case IOTC_ECC608_PROV_ENV:
                 case IOTC_ECC608_PROV_CPID:
                 case IOTC_ECC608_PROV_DUID:
-                    // iotconnect data re null terminated strings
+                    // iotconnect data are null terminated strings
                     if ((strlen(value) + 1) > size) {
                         Log.error(F("IOTC_ECC608: String size is larger than reserved size!"));
                         return ATCA_INVALID_LENGTH;
@@ -189,16 +195,26 @@ static ATCA_STATUS load_ecc608_cache(void) {
         return atca_status;
     }
 
-    bool has_iotconnect_data = false;
+    bool has_iotconnect_data = false;;
+    
     DataHeaderUnion* h = ecchdr_next(NULL);
     while(h->header.type != EMPTY) {
-        if (h->header.type == IOTC_ECC608_PROV_VER) {
-            if (ecchdr_get_data_size(h) != sizeof(IOTC_ECC608_PROV_DATA_VERSION)
-                || 0 != strcmp(IOTC_ECC608_PROV_DATA_VERSION, ecchdr_data_ptr(h))
-            ) {
-                Log.error(F("IOTC_ECC608: Unexpected iotconnect data version!"));
+        if (h->header.type == IOTC_ECC608_PROV_PLATFORM) {
+            if (ecchdr_get_data_size(h) == sizeof(IOTC_ECC608_PROV_PV_SIZE)) {
+                if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_1_0, ecchdr_data_ptr(h))) {
+                    // convert the old value to the new version 2 scheme
+                    // and assume Azure becasue the old version supported only azure
+                    Log.info(F("IOTC_ECC608: Detected old version of ATECC608 data. Converted data to the new version."));
+                    strcpy(ecchdr_data_ptr(h), IOTC_ECC608_PROV_DATA_PV_AZURE);
+                    has_iotconnect_data = true;
+                } else if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_AZURE, ecchdr_data_ptr(h))) {
+                    has_iotconnect_data = true;
+                } else if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_AWS, ecchdr_data_ptr(h))) {
+                    has_iotconnect_data = true;
+                } else {
+                    Log.error(F("IOTC_ECC608: Unexpected iotconnect data version/platform value!"));
+                }
             }
-            has_iotconnect_data = true; // all or nothing
         }
         h = ecchdr_next(h);
         if ((char*)h > &data_cache[IOTC_DATA_SLOT_SIZE]) {
@@ -207,7 +223,9 @@ static ATCA_STATUS load_ecc608_cache(void) {
     }
     if (!has_iotconnect_data) {
         append_iotconnect_blank_records(h);
-        atca_status = iotc_ecc608_set_string_value_internal(IOTC_ECC608_PROV_VER, IOTC_ECC608_PROV_DATA_VERSION);
+        
+        // make data sane:
+        atca_status = iotc_ecc608_set_string_value_internal(IOTC_ECC608_PROV_PLATFORM, IOTC_ECC608_PROV_DATA_PV_AZURE);
     }
     return ATCA_SUCCESS;
 }
@@ -279,12 +297,27 @@ ATCA_STATUS iotc_ecc608_init_provision(void) {
 }
 
 ATCA_STATUS iotc_ecc608_get_string_value(ecc_data_types data_type, char ** value) {
-    if (data_type == IOTC_ECC608_PROV_VER) {
+    if (data_type == IOTC_ECC608_PROV_PLATFORM) {
         *value = NULL;
         Log.warn(F("IOTC_ECC608: Warning: User code should not be reading IOTC_ECC608_PROV_VER"));
     }
     return iotc_ecc608_get_string_value_internal(data_type, value);
 }
+
+ATCA_STATUS iotc_ecc608_get_platform(IotConnectConnectionType* type) {
+    char * plaform_str;
+    ATCA_STATUS status = iotc_ecc608_get_string_value_internal(IOTC_ECC608_PROV_PLATFORM, &plaform_str);
+    if (ATCA_SUCCESS != status) {
+        return status;
+    }
+    if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_AWS, plaform_str)) {
+        *type = IOTC_CT_AWS;
+    } else {
+        *type = IOTC_CT_AZURE;
+    }    
+    return status;
+}
+
 
 // size is in/out: in=max / out=actual
 ATCA_STATUS iotc_ecc608_copy_string_value(ecc_data_types data_type, char *buffer, size_t buffer_size) {
@@ -293,7 +326,7 @@ ATCA_STATUS iotc_ecc608_copy_string_value(ecc_data_types data_type, char *buffer
     while(h->header.type != EMPTY) {
         if (h->header.type == data_type) {
             switch (data_type) {
-                case IOTC_ECC608_PROV_VER: // iotc_ecc608_get_string_value will warn about this data_type
+                case IOTC_ECC608_PROV_PLATFORM: // iotc_ecc608_get_string_value will warn about this data_type
                 case IOTC_ECC608_PROV_ENV:
                 case IOTC_ECC608_PROV_CPID:
                 case IOTC_ECC608_PROV_DUID:
@@ -328,11 +361,20 @@ ATCA_STATUS iotc_ecc608_copy_string_value(ecc_data_types data_type, char *buffer
 }
 
 ATCA_STATUS iotc_ecc608_set_string_value(ecc_data_types data_type, const char * value) {
-    if (data_type == IOTC_ECC608_PROV_VER) {
-        Log.error(F("IOTC_ECC608: Warning: User code should not be writing IOTC_ECC608_PROV_VER"));
+    if (data_type == IOTC_ECC608_PROV_PLATFORM) {
+        Log.error(F("IOTC_ECC608: User code should not be writing IOTC_ECC608_PROV_PLATFORM directly"));
         return ATCA_BAD_PARAM;
     }
     return iotc_ecc608_set_string_value_internal(data_type, value);
+}
+
+ATCA_STATUS iotc_ecc608_set_platform(IotConnectConnectionType type) {
+    if (type != IOTC_CT_AWS && type != IOTC_CT_AZURE) {
+        Log.error(F("IOTC_ECC608: iotc_ecc608_set_platform() invalid argument"));
+        return ATCA_BAD_PARAM;
+    }
+    const char* value = type == IOTC_CT_AWS ? IOTC_ECC608_PROV_DATA_PV_AWS : IOTC_ECC608_PROV_DATA_PV_AZURE;
+    return iotc_ecc608_set_string_value_internal(IOTC_ECC608_PROV_PLATFORM, value);
 }
 
 ATCA_STATUS iotc_ecc608_write_all_data(void) {
@@ -369,15 +411,15 @@ void iotc_ecc608_unit_test (void){
     if (0 == iotc_ecc608_copy_string_value(AWS_THINGNAME, buffer, 5)) { return; }
 
     Log.infof("Expected warning: ");
-    if (iotc_ecc608_copy_string_value(IOTC_ECC608_PROV_VER, buffer, BUFF_SIZE)) { return; }
-    Log.infof("IOTC_ECC608_PROV_VER: %s\r\n", buffer);
+    if (iotc_ecc608_copy_string_value(IOTC_ECC608_PROV_PLATFORM, buffer, BUFF_SIZE)) { return; }
+    Log.infof("IOTC_ECC608_PROV_PLATFORM: %s\r\n", buffer);
 
     Log.infof("Expected warning: ");
-    if (iotc_ecc608_get_string_value(IOTC_ECC608_PROV_VER, &value)) { return; }
-    Log.infof("IOTC_ECC608_PROV_VER: %s\r\n", value);
+    if (iotc_ecc608_get_string_value(IOTC_ECC608_PROV_PLATFORM, &value)) { return; }
+    Log.infof("IOTC_ECC608_PROV_PLATFORM: %s\r\n", value);
 
     Log.infof("Expected error: ");
-    if (0 == iotc_ecc608_set_string_value(IOTC_ECC608_PROV_VER, "v2.0")) { return; }
+    if (0 == iotc_ecc608_set_string_value(IOTC_ECC608_PROV_PLATFORM, "v2.0")) { return; }
 
     Log.infof("Expected error: ");
     if (0 == iotc_ecc608_set_string_value(IOTC_ECC608_PROV_CPID, "12345678901234567890123456789012345678901234567890123456789012345678901234567890")) { return; }

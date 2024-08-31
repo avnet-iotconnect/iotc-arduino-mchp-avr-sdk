@@ -175,8 +175,8 @@ void iotconnect_sdk_loop(void) {
 bool iotconnect_sdk_init(IotConnectClientConfig *c) {
     int status;
 
-    if (!c->cpid || !c->env || !c->duid) {
-        Log.error(F("CPID, Environment and DUID are required for iotconnect_sdk_init()"));
+    if (!c->cpid || !c->env || !c->duid || c->connection_type == IOTC_CT_UNDEFINED) {
+        Log.error(F("CPID, Environment, DUID and connection type are required for iotconnect_sdk_init()"));
         return false;
     }
 

@@ -96,6 +96,28 @@
 "MrY=" \
 "\n-----END CERTIFICATE-----"
 
+#define AMAZON_ROOT_CA1 \
+"\n-----BEGIN CERTIFICATE-----\n"\
+"MIIDQTCCAimgAwIBAgITBmyfz5m/jAo54vB4ikPmljZbyjANBgkqhkiG9w0BAQsF"\
+"ADA5MQswCQYDVQQGEwJVUzEPMA0GA1UEChMGQW1hem9uMRkwFwYDVQQDExBBbWF6"\
+"b24gUm9vdCBDQSAxMB4XDTE1MDUyNjAwMDAwMFoXDTM4MDExNzAwMDAwMFowOTEL"\
+"MAkGA1UEBhMCVVMxDzANBgNVBAoTBkFtYXpvbjEZMBcGA1UEAxMQQW1hem9uIFJv"\
+"b3QgQ0EgMTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBALJ4gHHKeNXj"\
+"ca9HgFB0fW7Y14h29Jlo91ghYPl0hAEvrAIthtOgQ3pOsqTQNroBvo3bSMgHFzZM"\
+"9O6II8c+6zf1tRn4SWiw3te5djgdYZ6k/oI2peVKVuRF4fn9tBb6dNqcmzU5L/qw"\
+"IFAGbHrQgLKm+a/sRxmPUDgH3KKHOVj4utWp+UhnMJbulHheb4mjUcAwhmahRWa6"\
+"VOujw5H5SNz/0egwLX0tdHA114gk957EWW67c4cX8jJGKLhD+rcdqsq08p8kDi1L"\
+"93FcXmn/6pUCyziKrlA4b9v7LWIbxcceVOF34GfID5yHI9Y/QCB/IIDEgEw+OyQm"\
+"jgSubJrIqg0CAwEAAaNCMEAwDwYDVR0TAQH/BAUwAwEB/zAOBgNVHQ8BAf8EBAMC"\
+"AYYwHQYDVR0OBBYEFIQYzIU07LwMlJQuCFmcx7IQTgoIMA0GCSqGSIb3DQEBCwUA"\
+"A4IBAQCY8jdaQZChGsV2USggNiMOruYou6r4lK5IpDB/G/wkjUu0yKGX9rbxenDI"\
+"U5PMCCjjmCXPI6T53iHTfIUJrU6adTrCC2qJeHZERxhlbI1Bjjt/msv0tadQ1wUs"\
+"N+gDS63pYaACbvXy8MWy7Vu33PqUXHeeE6V/Uq2V8viTO96LXFvKWlJbYK8U90vv"\
+"o/ufQJVtMVT8QtPHRh8jrdkPSHCa2XV4cdFyQzR1bldZwgJcJmApzyMZFo6IQ6XU"\
+"5MsI+yMRQ+hDKXJioaldXgjUkK642M4UwtBV8ob2xJNDd2ZhwLnoQdeXeGADbkpy"\
+"rqXRfboQnoZsG4q5WTP468SQvvG5"\
+"\n-----END CERTIFICATE-----"
+
 static bool write_ca_server_certificate(const char* data, const uint8_t slot) {
     const size_t data_length = strlen(data);
     char command[48];
@@ -189,7 +211,7 @@ static bool write_http_security_profile(void) {
   return true;
 }
 
-static bool write_ca_server_certificates(void) {
+static bool write_ca_server_certificates(IotConnectConnectionType type) {
   SequansController.begin();
 
   if (!write_ca_server_certificate(CERT_GODADDY_ROOT_CA_G2, HTTP_CUSTOM_CA_SLOT)) {
@@ -197,7 +219,8 @@ static bool write_ca_server_certificates(void) {
     return false;
   }
   Log.info(F("HTTPS CA certificate updated successfuly."));
-  if (!write_ca_server_certificate(CERT_DIGICERT_GLOBAL_ROOT_G2_ROOT_CA, MQTT_CUSTOM_CA_SLOT)) {
+  const char* ca_cert = type == IOTC_CT_AWS ? AMAZON_ROOT_CA1 : CERT_DIGICERT_GLOBAL_ROOT_G2_ROOT_CA;
+  if (!write_ca_server_certificate(ca_cert, MQTT_CUSTOM_CA_SLOT)) {
     Log.error(F("Unable to store the MQTT CA certificate!"));
     return false;
   }
@@ -268,10 +291,10 @@ void iotc_prov_init(void) {
     SequansController.begin();
 }
 
-bool iotc_prov_setup_tls_and_server_certs(void) {
+bool iotc_prov_setup_tls_and_server_certs(IotConnectConnectionType type) {
     return write_ciphersuite_config()
         && write_http_security_profile()
-        && write_ca_server_certificates()
+        && write_ca_server_certificates(type)
     ;
 }
 
