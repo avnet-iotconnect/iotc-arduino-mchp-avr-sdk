@@ -59,7 +59,7 @@ static ATCAIfaceCfg cfg_atecc608b_i2c = {
 #define IOTC_ECC608_PROV_DATA_PV_AZURE "2azr"
 #define IOTC_ECC608_PROV_DATA_PV_AWS   "2aws"
 #define IOTC_ECC608_PROV_DATA_PV_1_0   "v1.0" // will convert to IOTC_ECC608_PROV_DATA_PV_AZURE
-#define IOTC_ECC608_PROV_PV_SIZE (sizeof(IOTC_ECC608_PROV_DATA_PV_AZURE))
+#define IOTC_ECC608_PROV_PV_SIZE sizeof(IOTC_ECC608_PROV_DATA_PV_AZURE)
 
 typedef struct DataHeader {
     uint16_t next : 9; // Offset of next header, up to 512 bytes (slot 8 is 416)
@@ -175,7 +175,7 @@ static ATCA_STATUS load_ecc608_cache(void) {
         &slot_size
     );
     if (ATCA_SUCCESS != atca_status)  {
-        Log.errorf(F("IOTC_ECC608: Unable to read zone size: %d\r\n"), atca_status);
+        Log.errorf(F("IOTC_ECC608: Unable to read zone size: %d\n"), atca_status);
         return atca_status;
     }
 
@@ -195,12 +195,32 @@ static ATCA_STATUS load_ecc608_cache(void) {
         return atca_status;
     }
 
-    bool has_iotconnect_data = false;;
+    bool has_iotconnect_data = false;
+    int other_fields_count = 0;
     
     DataHeaderUnion* h = ecchdr_next(NULL);
     while(h->header.type != EMPTY) {
+        switch(h->header.type) {
+            case IOTC_ECC608_PROV_DUID: // fall through
+            case IOTC_ECC608_PROV_CPID: // fall through
+            case IOTC_ECC608_PROV_ENV:  // fall through
+                other_fields_count++;   // fall through but increment count only for above
+            case IOTC_ECC608_PROV_PLATFORM:
+                Log.debugf("hdr %d Type: %d Size: %d Data: %s\n", (int)((char *) h - data_cache), h->header.type, (int) ecchdr_get_data_size(h), ecchdr_data_ptr(h));
+                break;
+            default:
+                // don't garble with data
+                Log.debugf("hdr %d Type: %d Size: %d\n", (int)((char *) h - data_cache), h->header.type, (int) ecchdr_get_data_size(h));            
+        }
+        // don't use switch for this case cause we want to break the while loop and not the switch
         if (h->header.type == IOTC_ECC608_PROV_PLATFORM) {
-            if (ecchdr_get_data_size(h) == sizeof(IOTC_ECC608_PROV_PV_SIZE)) {
+            if (has_iotconnect_data) {
+                // Duplicater header?
+                Log.errorf(F("IOTC_ECC608: Detected duplicate version header. Data corruption? Size: %d Value:%s\n"), (int) ecchdr_get_data_size(h), ecchdr_data_ptr(h));
+                h->header.type = EMPTY;
+                break;
+            } else if (ecchdr_get_data_size(h) == IOTC_ECC608_PROV_PV_SIZE) {
+                Log.debug("Size match");
                 if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_1_0, ecchdr_data_ptr(h))) {
                     // convert the old value to the new version 2 scheme
                     // and assume Azure becasue the old version supported only azure
@@ -208,24 +228,44 @@ static ATCA_STATUS load_ecc608_cache(void) {
                     strcpy(ecchdr_data_ptr(h), IOTC_ECC608_PROV_DATA_PV_AZURE);
                     has_iotconnect_data = true;
                 } else if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_AZURE, ecchdr_data_ptr(h))) {
+                    Log.debug("Platform is Azure");
                     has_iotconnect_data = true;
                 } else if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_AWS, ecchdr_data_ptr(h))) {
+                    Log.debug("Platform is AWS");
                     has_iotconnect_data = true;
                 } else {
                     Log.error(F("IOTC_ECC608: Unexpected iotconnect data version/platform value!"));
                 }
+            } else {
+                Log.errorf(F("IOTC_ECC608: Expected data size %d but got %d!\n"), (int) IOTC_ECC608_PROV_PV_SIZE, (int) ecchdr_get_data_size(h));
             }
         }
         h = ecchdr_next(h);
         if ((char*)h > &data_cache[IOTC_DATA_SLOT_SIZE]) {
             Log.error(F("IOTC_ECC608: Could not find empty provisioning data header!")); // ran off past the end of data
+            break;
         }
     }
     if (!has_iotconnect_data) {
-        append_iotconnect_blank_records(h);
-        
+        if (other_fields_count == 0) {
+            append_iotconnect_blank_records(h);
+        } else {
+            Log.errorf(F("Expected no IoTConnect specific fields, but found %d. Unsupported version?\n"), other_fields_count);
+            memset(data_cache, 0, sizeof(data_cache));
+            h = ecchdr_next(NULL);
+            append_iotconnect_blank_records(h);
+        }        
         // make data sane:
         atca_status = iotc_ecc608_set_string_value_internal(IOTC_ECC608_PROV_PLATFORM, IOTC_ECC608_PROV_DATA_PV_AZURE);
+    } else {
+        if (other_fields_count != 3) {
+            Log.errorf(F("Expected 4 IoTConnect specific fields, but found %d. Unsupported version? Resetting data\n"), other_fields_count + 1);
+            memset(data_cache, 0, sizeof(data_cache));
+            h = ecchdr_next(NULL);
+            append_iotconnect_blank_records(h);
+            atca_status = iotc_ecc608_set_string_value_internal(IOTC_ECC608_PROV_PLATFORM, IOTC_ECC608_PROV_DATA_PV_AZURE);
+        }
+        // reporpulate
     }
     return ATCA_SUCCESS;
 }
@@ -236,13 +276,13 @@ ATCA_STATUS iotc_ecc608_get_serial_as_string(char* serial_str) {
 
     status = atcab_init(&cfg_atecc608b_i2c);
     if (status != ATCA_SUCCESS) {
-        printf("atcab_init() failed: %02x\r\n", status);
+        printf("atcab_init() failed: %02x\n", status);
         return status;
     }
 
     status = atcab_read_serial_number(serial_buffer);
     if (status != ATCA_SUCCESS) {
-        printf("atcab_read_serial_number() failed: %02x\r\n", status);
+        printf("atcab_read_serial_number() failed: %02x\n", status);
         return status;
     }
 
@@ -269,7 +309,7 @@ void iotc_ecc608_dump_provision_data(void) {
         }
 
         Log.infof(
-            F("Type:%d, size:%u, next:%u %s\r\n"),
+            F("Type:%d, size:%u, next:%u %s\n"),
             h->header.type,
             ecchdr_get_data_size(h),
             h->header.next,
@@ -387,7 +427,7 @@ ATCA_STATUS iotc_ecc608_write_all_data(void) {
         IOTC_DATA_SLOT_SIZE // we already checked that the actual size matches
     );
     if (ATCA_SUCCESS != atca_status) {
-        Log.errorf(F("Failed to write provisioning data! Error %d\r\n"), atca_status);
+        Log.errorf(F("Failed to write provisioning data! Error %d\n"), atca_status);
         return atca_status;
     }
     return ATCA_SUCCESS;
