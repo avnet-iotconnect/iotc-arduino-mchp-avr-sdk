@@ -12,9 +12,9 @@
 #include "mqtt_client.h"
 #include "led_ctrl.h"
 #include "veml3328.h"
+#include "iotconnect.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
-#include "iotconnect.h"
 
 #define APP_VERSION "02.00.00"
 
@@ -139,6 +139,10 @@ static bool load_provisioned_data(IotConnectClientConfig *config) {
   if (ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_DUID, &(config->duid))) {
     return false; // caller will print the error
   }
+  if (ATCA_SUCCESS != iotc_ecc608_get_platform(&(config->connection_type))) {
+    return false; // caller will print the error
+  }
+
   return true;
 }
 
@@ -186,7 +190,7 @@ void reserve_stack_with_heap_leak() {
 void demo_setup(void)
 {
   Log.begin(115200);
-  Log.setLogLevel(LogLevel::INFO);
+  Log.setLogLevel(LogLevel::DEBUG);
   delay(2000);
 
   Log.infof(F("Starting the Sample Application %s\r\n"), APP_VERSION);
@@ -215,6 +219,7 @@ void demo_setup(void)
   if (!load_provisioned_data(&config)
     || !config.cpid || 0 == strlen(config.cpid)
     || !config.env || 0 == strlen(config.env)
+    || config.connection_type == IOTC_CT_UNDEFINED
   ) {
       Log.error("Invalid provisioning data. Please run the avr-iot-provision sketch.");
       return;
@@ -228,6 +233,8 @@ void demo_setup(void)
 
     config.duid = duid_from_serial_buf;
   }
+
+  Log.infof(F("Platform: %s\r\n"), config.connection_type == IOTC_CT_AWS ? "AWS" : "Azure");
   Log.infof(F("CPID: %s\r\n"), config.cpid);
   Log.infof(F("ENV : %s\r\n"), config.env);
   Log.infof(F("DUID: %s\r\n"), config.duid);
@@ -240,7 +247,6 @@ void demo_setup(void)
   config.ota_cb = on_ota;
   config.status_cb = on_connection_status;
   config.cmd_cb = on_command;
-  config.connection_type = IOTC_CT_AZURE; // for now
   config.verbose = true;
 
   if (iotconnect_sdk_init(&config)) {

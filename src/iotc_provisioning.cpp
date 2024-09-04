@@ -224,7 +224,7 @@ static bool write_ca_server_certificates(IotConnectConnectionType type) {
     Log.error(F("Unable to store the MQTT CA certificate!"));
     return false;
   }
-  Log.info(F("MQTT CA certificate updated successfuly."));
+  Log.infof(F("MQTT CA certificate updated successfuly for the %s connection.\n"), type == IOTC_CT_AWS ? "AWS" : "Azure");
   return true;
 }
 

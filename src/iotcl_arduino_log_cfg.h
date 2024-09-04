@@ -11,7 +11,7 @@
 #ifdef IOTCL_ENDLN
 #undef IOTCL_ENDLN
 #endif
-#define IOTCL_ENDLN F("\r\n")
+#define IOTCL_ENDLN F("\n")
 
 #define IOTCL_ERROR(err_code, fmt, ...) \
     do { \
