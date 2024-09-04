@@ -36,17 +36,17 @@ static int16_t fixed_http_client_read_body(char* buffer, const uint32_t buffer_s
     // Safeguard against the limitation in the Sequans AT command parameter
     // for the response receive command.
     if (buffer_size < HTTP_BODY_BUFFER_MIN_SIZE) {
-        Log.errorf(F("Buffer should have at least %d bytes\r\n"), HTTP_BODY_BUFFER_MIN_SIZE);
+        Log.errorf(F("Buffer should have at least %d bytes\n"), HTTP_BODY_BUFFER_MIN_SIZE);
         return -1;
     }
 
     if (buffer_size > HTTP_BODY_BUFFER_MAX_SIZE) {
-        Log.errorf(F("Buffer should have at most %d bytes\r\n"), HTTP_BODY_BUFFER_MAX_SIZE);
+        Log.errorf(F("Buffer should have at most %d bytes\n"), HTTP_BODY_BUFFER_MAX_SIZE);
         return -1;
     }
 
     if (buffer_size < request_bytes + HTTP_RESPONSE_BUFFER_SLACK) {
-        Log.errorf(F("Buffer size must have at least %d extra bytes to accomodate the request\r\n"), HTTP_RESPONSE_BUFFER_SLACK);
+        Log.errorf(F("Buffer size must have at least %d extra bytes to accomodate the request\n"), HTTP_RESPONSE_BUFFER_SLACK);
         return -1;
     }
 
@@ -59,7 +59,7 @@ static int16_t fixed_http_client_read_body(char* buffer, const uint32_t buffer_s
     if (!SequansController.writeString(F("AT+SQNHTTPRCV=0,%lu"),
                                        true,
                                        request_bytes)) {
-        Log.error(F("Was not able to write HTTP read body AT command\r\n"));
+        Log.error(F("Was not able to write HTTP read body AT command\n"));
         return -1;
     }
 
@@ -79,7 +79,7 @@ static int16_t fixed_http_client_read_body(char* buffer, const uint32_t buffer_s
     ResponseResult res = SequansController.readResponse(buffer, buffer_size);
     if (res !=
         ResponseResult::OK) {
-        Log.debugf(F("readResponse result %d\r\n"), (int) res);
+        Log.debugf(F("readResponse result %d\n"), (int) res);
         return -1;
     }
 
@@ -100,10 +100,10 @@ int iotconnect_https_request(
 
     HttpResponse http_rsp;
     if (!send_str || 0 == strlen(send_str)) {
-        Log.debugf(F("get: %s %s\r\n"), host, path);
+        Log.debugf(F("get: %s %s\n"), host, path);
         http_rsp = HttpClient.get(path);
     } else {
-        Log.debugf(F("post: %s %s >>%s<<\r\n"), host, path, send_str);
+        Log.debugf(F("post: %s %s >>%s<<\n"), host, path, send_str);
         http_rsp = HttpClient.post(
             path,
             send_str,
@@ -114,15 +114,15 @@ int iotconnect_https_request(
     }
 
     if (0 == http_rsp.status_code) {
-        Log.errorf(F("Unable to get response from the server for URL https://%s%s\r\n"), host, path);
+        Log.errorf(F("Unable to get response from the server for URL https://%s%s\n"), host, path);
         return IOTCL_ERR_FAILED;
     }
 
     if (200 != http_rsp.status_code) {
-        Log.warnf(F("Unexpected HTTP response status code %u\r\n"), http_rsp.status_code);
+        Log.warnf(F("Unexpected HTTP response status code %u\n"), http_rsp.status_code);
     }
 
-    Log.debugf(F("Reported data size is %u\r\n"), http_rsp.data_size);
+    Log.debugf(F("Reported data size is %u\n"), http_rsp.data_size);
 
     const size_t BUFFER_SIZE = 2000;
     // we need to allow slack for the buffer
@@ -130,15 +130,15 @@ int iotconnect_https_request(
 
     if (!http_rsp.data_size) {
         // we didn't get content length, so must be chunked transfer
-        Log.debugf(F("HTTP Client: Did not get content-length. Getting up to %d bytes of data\r\n"), REQUEST_DATA_MAX_SIZE);
+        Log.debugf(F("HTTP Client: Did not get content-length. Getting up to %d bytes of data\n"), REQUEST_DATA_MAX_SIZE);
     } else if (http_rsp.data_size > REQUEST_DATA_MAX_SIZE) {
-        Log.errorf(F("HTTP Client: Content length is %d but the buffer can accomodate up to %d bytes of data\r\n"), (int) http_rsp.data_size, REQUEST_DATA_MAX_SIZE);
+        Log.errorf(F("HTTP Client: Content length is %d but the buffer can accomodate up to %d bytes of data\n"), (int) http_rsp.data_size, REQUEST_DATA_MAX_SIZE);
         return IOTCL_ERR_OVERFLOW;
     }
 
     response->data = (char *) iotcl_malloc(BUFFER_SIZE);
     if (!response->data ) {
-        Log.errorf(F("HTTP Client: Failed to allocate %d bytes!\r\n"), (int) BUFFER_SIZE);
+        Log.errorf(F("HTTP Client: Failed to allocate %d bytes!\n"), (int) BUFFER_SIZE);
         return IOTCL_ERR_OUT_OF_MEMORY;
     }
     memset(response->data, 0, BUFFER_SIZE);
@@ -162,7 +162,7 @@ int iotconnect_https_request(
             // just use a truncated buffer range unless we reach the boundary
             buffer_remaining = HTTP_BODY_BUFFER_MAX_SIZE - 1;
         } else if(buffer_remaining < HTTP_BODY_BUFFER_MIN_SIZE) {
-            Log.error(F("HTTP Client: Response overflow. Ran out of buffer space!\r\n"));
+            Log.error(F("HTTP Client: Response overflow. Ran out of buffer space!\n"));
             iotconnect_free_https_response(response);
             return IOTCL_ERR_OVERFLOW;  
         }
@@ -175,9 +175,9 @@ int iotconnect_https_request(
             break;
         } else if (chunk_bytes_read > 0) {
             total_read += (size_t) chunk_bytes_read;
-            Log.debugf(F("HTTP: Read %d bytes\r\n"), (int) chunk_bytes_read);
+            Log.debugf(F("HTTP: Read %d bytes\n"), (int) chunk_bytes_read);
         } else {
-            Log.debugf(F("HTTP: Error %d\r\n"), (int) chunk_bytes_read);
+            Log.debugf(F("HTTP: Error %d\n"), (int) chunk_bytes_read);
             iotconnect_free_https_response(response);
             return IOTCL_ERR_FAILED;
         }

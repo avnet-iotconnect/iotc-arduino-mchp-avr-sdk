@@ -137,7 +137,7 @@ static bool write_ca_server_certificate(const char* data, const uint8_t slot) {
 
     ResponseResult res = SequansController.readResponse(rbuff, sizeof(rbuff));
     if (res != ResponseResult::OK) {
-        Log.errorf(F("Write certificate error: %d. Response: \"%s\"\r\n"), res, rbuff);
+        Log.errorf(F("Write certificate error: %d. Response: \"%s\"\n"), res, rbuff);
         return false;
     }
 
@@ -236,13 +236,13 @@ static void print_certificate(uint8_t* certificate, uint16_t size) {
       atcab_base64encode(certificate, size, buffer, &buffer_size);
 
   if (result != ATCA_SUCCESS) {
-      Log.errorf(F("Failed to encode into base64: %x\r\n"), result);
+      Log.errorf(F("Failed to encode into base64: %x\n"), result);
       return;
   }
 
   buffer[buffer_size] = 0;
   Log.rawf(
-      F("-----BEGIN CERTIFICATE-----\r\n%s\r\n-----END CERTIFICATE-----\r\n"),
+      F("-----BEGIN CERTIFICATE-----\n%s\n-----END CERTIFICATE-----\n"),
       buffer
   );
 }
@@ -258,13 +258,13 @@ bool print_device_certificate() {
     &device_certificate_size_max
   );
   if (atca_cert_status != ATCACERT_E_SUCCESS) {
-    Log.errorf(F("Failed to get device certificate's max size, status code: 0x%x\r\n"),
+    Log.errorf(F("Failed to get device certificate's max size, status code: 0x%x\n"),
       atca_cert_status
     );
     return false;
   }
   if (device_certificate_size_max > certificate_buffer_size) {
-    Log.errorf(F("ERROR: Device certificate is %lu bytes in size, but the buffer is only  %lu bytes.\r\n"),
+    Log.errorf(F("ERROR: Device certificate is %lu bytes in size, but the buffer is only  %lu bytes.\n"),
       device_certificate_size_max,
       certificate_buffer_size
     );
@@ -276,7 +276,7 @@ bool print_device_certificate() {
       &device_certificate_size
   );
   if (atca_cert_status != ATCACERT_E_SUCCESS) {
-    Log.errorf(F("Failed to get device certificate, status code: 0x%X\r\n"),
+    Log.errorf(F("Failed to get device certificate, status code: 0x%X\n"),
       atca_cert_status
     );
     return false;

@@ -24,9 +24,9 @@ static void dump_response(const char *message, IotConnectHttpResponse *response)
         Log.infof(F("%s:\n"), message);
     }
     if (response->data) {
-        Log.infof(F("Response was:\n----\n%s\r\n----\r\n"), response->data);
+        Log.infof(F("Response was:\n----\n%s\n----\n"), response->data);
     } else {
-        Log.infof(F("Response was empty\r\n"));
+        Log.infof(F("Response was empty\n"));
     }
 }
 

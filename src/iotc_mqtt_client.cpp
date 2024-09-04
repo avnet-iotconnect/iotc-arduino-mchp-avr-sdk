@@ -49,7 +49,7 @@ void iotc_mqtt_client_loop() {
     // messages, so anything other than that means that there was a new
     // message
     if (message != "") {
-        Log.infof(F("Got new message: %s\r\n"), message.c_str());
+        Log.infof(F("Got new message: %s\n"), message.c_str());
         if (c->c2d_msg_cb) {
             const char* c_str = message.c_str();
             c->c2d_msg_cb(c_str);
@@ -90,7 +90,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         return false;
     }
 
-    Log.infof("Attempting to connect to MQTT host:%s, client id:%s, username: %s\r\n",
+    Log.infof("Attempting to connect to MQTT host:%s, client id:%s, username: %s\n",
         mc->host,
         mc->client_id,
         mc->username
@@ -104,7 +104,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         true,
         mc->username,
         "")) {
-            Log.errorf(F("Failed to connect to MQTT using host:%s, client id:%s, username: %s\r\n"),
+            Log.errorf(F("Failed to connect to MQTT using host:%s, client id:%s, username: %s\n"),
                 mc->host,
                 mc->client_id,
                 mc->username
@@ -119,7 +119,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         tires_num_500ms--;
         if (tires_num_500ms < 0) {
             Log.raw(F("")); // start in a new line
-            Log.errorf(F("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n"),
+            Log.errorf(F("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\n"),
                 mc->host,
                 mc->client_id,
                 mc->username
@@ -128,7 +128,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
             return false;
         }
         if (disconnect_received) {
-            Log.errorf(F("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username: %s\r\n"),
+            Log.errorf(F("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username: %s\n"),
                 mc->host,
                 mc->client_id,
                 mc->username
@@ -140,7 +140,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
     }
 
     if(!MqttClient.subscribe(mc->sub_c2d)) {
-        Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!\r\n"), mc->sub_c2d);
+        Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!\n"), mc->sub_c2d);
         return false;
     }
 

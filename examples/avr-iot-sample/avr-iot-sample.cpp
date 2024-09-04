@@ -79,7 +79,7 @@ static void on_command(IotclC2dEventData data) {
             }
             command_status(ack_id, true, command, "OK");
         } else {
-            Log.errorf(F("Unknown command:%s\r\n"), command);
+            Log.errorf(F("Unknown command:%s\n"), command);
             command_status(ack_id, false, command, "Not implemented");
         }
         free((void *) command);
@@ -155,13 +155,13 @@ void memory_test() {
     int i = 0;
     for (; i < TEST_BLOCK_COUNT; i++) {
         void *ptr = malloc(TEST_BLOCK_SIZE);
-        Log.infof(F("0x%x\r\n"), (unsigned long) ptr);
+        Log.infof(F("0x%x\n"), (unsigned long) ptr);
         blocks[i] = ptr;
         if (!ptr) {
             break;
         }
     }
-    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\r\n"), i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
+    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\n"), i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
     for (int j = 0; j < i; j++) {
         free(blocks[j]);
     }
@@ -181,7 +181,7 @@ void reserve_stack_with_heap_leak() {
             break;
         }
     }
-    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\r\n"), i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
+    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\n"), i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
     for (int j = 0; j < (i - RESERVE_LEAK_COUNT); j++) {
         free(blocks[j]);
     }
@@ -193,7 +193,7 @@ void demo_setup(void)
   Log.setLogLevel(LogLevel::DEBUG);
   delay(2000);
 
-  Log.infof(F("Starting the Sample Application %s\r\n"), APP_VERSION);
+  Log.infof(F("Starting the Sample Application %s\n"), APP_VERSION);
 
   LedCtrl.begin();
   LedCtrl.startupCycle();
@@ -234,10 +234,10 @@ void demo_setup(void)
     config.duid = duid_from_serial_buf;
   }
 
-  Log.infof(F("Platform: %s\r\n"), config.connection_type == IOTC_CT_AWS ? "AWS" : "Azure");
-  Log.infof(F("CPID: %s\r\n"), config.cpid);
-  Log.infof(F("ENV : %s\r\n"), config.env);
-  Log.infof(F("DUID: %s\r\n"), config.duid);
+  Log.infof(F("Platform: %s\n"), config.connection_type == IOTC_CT_AWS ? "AWS" : "Azure");
+  Log.infof(F("CPID: %s\n"), config.cpid);
+  Log.infof(F("ENV : %s\n"), config.env);
+  Log.infof(F("DUID: %s\n"), config.duid);
 
   if (!connect_lte()) {
       return;

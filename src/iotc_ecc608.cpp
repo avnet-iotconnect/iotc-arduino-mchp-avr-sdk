@@ -445,18 +445,18 @@ void iotc_ecc608_unit_test (void){
 
     strcpy(buffer, LONG_STRING);
     if (iotc_ecc608_copy_string_value(AWS_THINGNAME, buffer, BUFF_SIZE)) { return; }
-    Log.infof("AWS_THINGNAME: %s\r\n", buffer);
+    Log.infof("AWS_THINGNAME: %s\n", buffer);
 
     Log.infof("Expected error: ");
     if (0 == iotc_ecc608_copy_string_value(AWS_THINGNAME, buffer, 5)) { return; }
 
     Log.infof("Expected warning: ");
     if (iotc_ecc608_copy_string_value(IOTC_ECC608_PROV_PLATFORM, buffer, BUFF_SIZE)) { return; }
-    Log.infof("IOTC_ECC608_PROV_PLATFORM: %s\r\n", buffer);
+    Log.infof("IOTC_ECC608_PROV_PLATFORM: %s\n", buffer);
 
     Log.infof("Expected warning: ");
     if (iotc_ecc608_get_string_value(IOTC_ECC608_PROV_PLATFORM, &value)) { return; }
-    Log.infof("IOTC_ECC608_PROV_PLATFORM: %s\r\n", value);
+    Log.infof("IOTC_ECC608_PROV_PLATFORM: %s\n", value);
 
     Log.infof("Expected error: ");
     if (0 == iotc_ecc608_set_string_value(IOTC_ECC608_PROV_PLATFORM, "v2.0")) { return; }
@@ -466,9 +466,9 @@ void iotc_ecc608_unit_test (void){
     if (iotc_ecc608_set_string_value(IOTC_ECC608_PROV_CPID, "MY_CPID")) { return; }
     strcpy(buffer, LONG_STRING);
     if (iotc_ecc608_copy_string_value(IOTC_ECC608_PROV_CPID, buffer, BUFF_SIZE)) { return; }
-    Log.infof("IOTC_ECC608_PROV_CPID: %s\r\n", buffer);
+    Log.infof("IOTC_ECC608_PROV_CPID: %s\n", buffer);
     if (iotc_ecc608_get_string_value(IOTC_ECC608_PROV_CPID, &value)) { return; }
-    Log.infof("IOTC_ECC608_PROV_CPID: %s\r\n", value);
+    Log.infof("IOTC_ECC608_PROV_CPID: %s\n", value);
 
     Log.infof("Expected error: ");
     if (0 == iotc_ecc608_set_string_value(AZURE_ID_SCOPE, "dummy")) { return; }
