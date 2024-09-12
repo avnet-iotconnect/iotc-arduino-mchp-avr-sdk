@@ -16,6 +16,8 @@
 #include "iotc_mqtt_client.h"
 #include "iotconnect.h"
 
+// #define AWS_QUALIFICATION
+
 static bool is_verbose = false;
 static IotConnectMqttClientConfig mqtt_config = {0};
 
@@ -76,21 +78,18 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
             return IOTCL_ERR_BAD_VALUE;
     }
 
-    if (status) {
-        return status; // called function will print the error
-    }
+    if (status) goto cleanup; // called function will print the error
 
-    if (iotconnect_https_request(&response,
-                             iotcl_dra_url_get_hostname(&discovery_url),
-							 iotcl_dra_url_get_resource(&discovery_url),
-							 NULL
-    )) {
-        goto cleanup;
-    }
+
+    status = iotconnect_https_request(&response,
+        iotcl_dra_url_get_hostname(&discovery_url),
+        iotcl_dra_url_get_resource(&discovery_url),
+        NULL
+    );
+    if (status) goto cleanup; // called function will print the error
 
     status = validate_response(&response);
     if (status) goto cleanup; // called function will print the error
-
 
     status = iotcl_dra_discovery_parse(&identity_url, 0, response.data);
     if (status) {
@@ -109,13 +108,12 @@ static int run_http_identity(IotConnectConnectionType ct, const char* duid, cons
         Log.infof(F("Using identity URL %s\n"), iotcl_dra_url_get_url(&identity_url));
     }
 
-    if(iotconnect_https_request(&response,
-                             iotcl_dra_url_get_hostname(&identity_url),
-							 iotcl_dra_url_get_resource(&identity_url),
-							 NULL
-    )) {
-        goto cleanup;
-    }
+    status = iotconnect_https_request(&response,
+        iotcl_dra_url_get_hostname(&identity_url),
+        iotcl_dra_url_get_resource(&identity_url),
+        NULL
+    );
+    if (status) goto cleanup; // called function will print the error
 
     status = validate_response(&response);
     if (status) goto cleanup; // called function will print the error
@@ -148,7 +146,6 @@ static void iotconnect_sdk_mqtt_send_cb(const char *topic, const char *json_str)
     iotc_mqtt_client_send_message(topic, json_str);
 }
 
-
 static void on_mqtt_message(const char* message) {
     if (is_verbose) {
         Log.infof(F("event>>> %s"), message);
@@ -169,6 +166,43 @@ bool iotconnect_sdk_is_connected(void) {
 void iotconnect_sdk_loop(void) {
     return iotc_mqtt_client_loop();
 }
+
+#ifdef AWS_QUALIFICATION
+void iotc_qualification_start(const char* host) {
+    IotclMqttConfig *mc = iotcl_mqtt_get_config();
+    iotcl_free(mc->pub_rpt);
+    iotcl_free(mc->sub_c2d);
+    mc->pub_rpt = iotcl_strdup("qualification");
+    mc->sub_c2d = iotcl_strdup("qualification");
+    // mc->host = iotcl_strdup("a2tz930267bcnl-ats.iot.eu-west-1.amazonaws.com");
+    mc->host = iotcl_strdup("t2wlntge8x69qa.deviceadvisor.iot.eu-west-1.amazonaws.com");
+
+    // iotconnect_sdk_disconnect();
+
+    unsigned long last_connected = millis();
+    while(true) {
+        if (!iotconnect_sdk_is_connected()) {
+            delay(10000);
+            if (!iotc_mqtt_client_init(&mqtt_config)) {
+                Log.error(F("Failed to connect!"));
+                continue;
+            }
+            last_connected = millis();
+        }
+#if 0
+        IotclMessageHandle msg = iotcl_telemetry_create();
+    	iotcl_telemetry_set_string(msg, "qualification", "true");
+    	iotcl_mqtt_send_telemetry(msg, false);
+        iotcl_telemetry_destroy(msg);
+#endif
+        delay(10000);
+        iotconnect_sdk_loop();
+        if (millis() - last_connected > 60000) {
+            iotconnect_sdk_disconnect();
+        }
+    }
+}
+#endif // AWS_QUALIFICATION
 
 ///////////////////////////////////////////////////////////////////////////////////
 // this the Initialization os IoTConnect SDK
@@ -211,6 +245,13 @@ bool iotconnect_sdk_init(IotConnectClientConfig *c) {
 
     mqtt_config.status_cb = c->status_cb;
     mqtt_config.c2d_msg_cb = on_mqtt_message;
+
+#ifdef AWS_QUALIFICATION
+    iotc_qualification_start("t2wlntge8x69qa.deviceadvisor.iot.eu-west-1.amazonaws.com");
+    // should never this line if AWS_QUALIFICATION
+    return true;
+#endif
+
     if (!iotc_mqtt_client_init(&mqtt_config)) {
         Log.error(F("Failed to connect!"));
         return false;

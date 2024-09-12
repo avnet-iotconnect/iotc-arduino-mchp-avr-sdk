@@ -41,3 +41,45 @@ and append this code:
 The F() macro is used to tell the arduino compiler that the constant strings wrapped around it 
 should be used directly from flash. If the F() macro is not used for constant strings (often used for printf and similar)
 then the strings in flash are copied to RAM and used from RAM.
+
+### Debugging the modem:
+
+If modem debvugging is needed, the following code can be added to sequans_controlller.cpp
+
+```C
+        if (data == CARRIAGE_RETURN || data == LINE_FEED) {
+
+            // Add termination since we're done
+            urc_data_buffer[urc_data_buffer_length] = 0;
+            // Clear the buffer for the URC if requested and if it already
+            // hasn't been read
+            if (urcs[urc_index].should_clear &&
+                rx_num_elements >= urc_data_buffer_length) {
+
+                rx_head_index = (rx_head_index - urc_data_buffer_length) &
+                                RX_BUFFER_MASK;
+                rx_num_elements = (rx_num_elements - urc_data_buffer_length);
+            }
+
+            if (urc_current_callback != NULL) {
+                // Apply flow control here for the modem, we make it wait to
+                // send more data until we've finished the URC callback
+                RTS_PORT.OUTSET = RTS_PIN_bm;
+                urc_current_callback((char*)urc_data_buffer);
+                urc_current_callback = NULL;
+                RTS_PORT.OUTCLR      = RTS_PIN_bm;
+            }
+#if 0
+            Serial3.print("#");
+            Serial3.print((char*)urc_identifier_buffer);
+            Serial3.print("=");
+            Serial3.print((char*)urc_data_buffer);
+            Serial3.print("<");
+            Serial3.println();
+#endif
+            urc_parse_state        = URC_NOT_PARSING;
+            urc_data_buffer_length = 0;
+
+        } else if (urc_data_buffer_length == URC_DATA_BUFFER_SIZE) {
+
+```

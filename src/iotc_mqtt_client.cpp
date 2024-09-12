@@ -3,7 +3,7 @@
  * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
  */
 
-   
+
 #include <stddef.h>
 #include <string.h>
 #include <Arduino.h>
@@ -14,7 +14,8 @@
 #include "iotc_mqtt_client.h"
 
 #define MQTT_SECURE_PORT 8883
-#define MQTT_SUB_TOPIC_FORMAT "devices/%s/messages/devicebound/%%24.to=%%2Fdevices%%2F%s%%2Fmessages%%2FdeviceBound"
+#define IOTC_MQTT_CONN_RETRY_INTERVAL_MS      5000
+#define IOTC_MAX_MQTT_CONN_RETRIES            3
 
 static bool disconnect_received = false;
 static IotConnectMqttClientConfig* c = NULL;
@@ -29,7 +30,7 @@ bool iotc_mqtt_client_is_connected(void) {
 }
 
 bool iotc_mqtt_client_send_message(const char* topic, const char *message) {
-    return MqttClient.publish(topic, message);
+    return MqttClient.publish(topic, message, AT_LEAST_ONCE);
 }
 
 void iotc_mqtt_client_loop() {
@@ -64,6 +65,35 @@ static void on_mqtt_disconnected(void) {
     }
 }
 
+bool iotc_mqtt_client_connect(void) {
+    IotclMqttConfig* mc = iotcl_mqtt_get_config();
+    for (int i = 0; i < IOTC_MAX_MQTT_CONN_RETRIES; i++) {
+        if(MqttClient.begin(mc->client_id,
+            mc->host,
+            MQTT_SECURE_PORT,
+            true,
+            60,
+            true,
+            mc->username ? mc->username : "",
+            "",
+            30000)) {
+            return true;
+        } else {
+            unsigned int backoff = (rand() % IOTC_MQTT_CONN_RETRY_INTERVAL_MS) + 1000; // minimum 1 second
+            Log.errorf(F("Failed to connect to MQTT using host:%s, client id:%s, username:%s. Retrying in %d ms\n"),
+                mc->host,
+                mc->client_id,
+                mc->username ? mc->username : "[empty]",
+                backoff
+            );
+            MqttClient.end();
+            delay(backoff);
+        }
+    }
+    Log.errorf(F("Failed to connect to MQTT after %d retries\n"), IOTC_MAX_MQTT_CONN_RETRIES);
+    return false;
+}
+
 bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
     disconnect_received = false;
     c = config;
@@ -78,6 +108,7 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         Log.error(F("iotc_mqtt_client_init() called with invalid arguments"));
         return false;
     }
+
     if (!Lte.isConnected()) {
         Log.error(F("LTE must be up and running before initializing MQTT"));
         return false;
@@ -90,56 +121,45 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         return false;
     }
 
-    Log.infof("Attempting to connect to MQTT host:%s, client id:%s, username: %s\n",
+    Log.infof("Attempting to connect to MQTT host:%s, client id:%s, username:%s\n",
         mc->host,
         mc->client_id,
-        mc->username
+        mc->username ? mc->username : "[empty]"
     );
 
-    if(!MqttClient.begin(mc->client_id,
-        mc->host,
-        MQTT_SECURE_PORT,
-        true,
-        60,
-        true,
-        mc->username,
-        "")) {
-            Log.errorf(F("Failed to connect to MQTT using host:%s, client id:%s, username: %s\n"),
-                mc->host,
-                mc->client_id,
-                mc->username
-            );
-            return false;
-    }
 
     MqttClient.onDisconnect(on_mqtt_disconnected);
+
+    if (!iotc_mqtt_client_connect()) {
+        return false;
+    }
 
     int tires_num_500ms = 120; // 60 seconds
     while (!MqttClient.isConnected()) {
         tires_num_500ms--;
         if (tires_num_500ms < 0) {
             Log.raw(F("")); // start in a new line
-            Log.errorf(F("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username: %s\n"),
+            Log.errorf(F("Timed out while attempting to connect to MQTT using host:%s, client id:%s, username:%s\n"),
                 mc->host,
                 mc->client_id,
-                mc->username
+                mc->username ? mc->username : "[empty]"
             );
             MqttClient.end();
             return false;
         }
         if (disconnect_received) {
-            Log.errorf(F("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username: %s\n"),
+            Log.errorf(F("Received a disconnect while attempting to connect to MQTT using host:%s, client id:%s, username:%s\n"),
                 mc->host,
                 mc->client_id,
-                mc->username
+                mc->username ? mc->username : "[empty]"
             );
             return false;
         }
-        Log.rawf(F("."));
+        Log.rawf(F("_"));
         delay(500);
     }
 
-    if(!MqttClient.subscribe(mc->sub_c2d)) {
+    if(!MqttClient.subscribe(mc->sub_c2d, AT_LEAST_ONCE)) {
         Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!\n"), mc->sub_c2d);
         return false;
     }

@@ -220,7 +220,6 @@ static ATCA_STATUS load_ecc608_cache(void) {
                 h->header.type = EMPTY;
                 break;
             } else if (ecchdr_get_data_size(h) == IOTC_ECC608_PROV_PV_SIZE) {
-                Log.debug("Size match");
                 if (0 == strcmp(IOTC_ECC608_PROV_DATA_PV_1_0, ecchdr_data_ptr(h))) {
                     // convert the old value to the new version 2 scheme
                     // and assume Azure becasue the old version supported only azure

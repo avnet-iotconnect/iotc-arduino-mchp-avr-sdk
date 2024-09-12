@@ -23,75 +23,61 @@ such as [Tera Term](https://ttssh2.osdn.jp/index.html.en).
 * Follow the
  [AVR-IoT Cellular Mini UserGuide's Development Environment Section](https://iot.microchip.com/docs/arduino/introduction/devenv) 
 to set up and prepare your Arduino development environment.
-The project has been tested with Arduino IDE 2.0.4, AVR-IoT-Cellular library version 1.3.8 and DXCore version 1.5.8.
+The project has been tested with Arduino IDE 2.3.2, AVR-IoT-Cellular library version 1.3.11 (minimum required) and DXCore version 1.5.11.
 It is recommended that you install these specific versions.
 * Once your SIM is activated and Arduino environment set up, 
-clone this repo into your Arduino sketch directory under the libraries directory.
+clone this repo into your Arduino sketch directory under the *libraries* directory.
 For example, once you clone this SDK, the contents of this repo should be 
-under C:\Users\<your username>\Documents\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows.
-* **IMPORTANT:** After downloading or upgrading AVR-IoT-Cellular library, ensure to enable the following features
-in atca_config.h located at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src\cryptoauthlib: 
-```c
-#define ATCAB_UPDATEEXTRA_EN              FEATURE_ENABLED
-// ...
-#define ATCAB_WRITE_EN                    FEATURE_ENABLED
-```
-and also increase the topic length from 128 to 384 in mqtt_lcient.h 
-located at C:\Users\<your username>\Documents\Arduino\libraries\AVR-IoT-Cellular\src:
-```c
-#define MQTT_TOPIC_MAX_LENGTH 384
-```
+under C:\Users\<your username>\Documents\Arduino\libraries\iotconnect-mchp-avr-sdk* in Windows
 
 * Open the Arduino IDE and load the avr-iot-provision example by navigating
-to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
-* Open the serial console application and establish a connection to the board in order to see the provisioning output.
-* Run the avr-iot-provision.ino sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
+to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu
+* Open the serial console application and establish a connection to the board in order to see the provisioning output
+* Run the avr-iot-provision.ino sketch by selecting the *Sketch->Upload Using Programmer* from the menu
 * You should see an output similar to this:
 
 ```
 [INFO] Starting the provisioning sample...
-[INFO] Setting up MQTT profile #1 and ciphersuites...
-[INFO] MQTT profile and ciphersuite config written successfully.
-[INFO] Setting up HTTP profile #3..
-[INFO] HTTP profile was set up successfully.
-[INFO] HTTPS CA certificate updated successfuly.
-[INFO] MQTT CA certificate updated successfuly.
 -----BEGIN CERTIFICATE-----
 MIIB8DCCAZegAwIBAgIQZqxXFSHF/eOiwnn/0rSQLzAKBggqhkjOPQQDAjBPMSEw
 HwYDVQQKDBhNaWNyb2NoaXAgVGVjaG5vbG9neSBJbmMxKjAoBgNVBAMMIUNyeXB0
 byBBdXRoZW50aWNhdGlvbiBTaWduZXIgMkQzMDAgFw0yMTAzMjUxMTAwMDBaGA8y
-MDQ5MDMyNTExMDAwMFowQjEhMB8GA1UECgwYTWljcm9jaGlwIFRlY2hub2xvZ3kg
-SW5jMR0wGwYDVQQDDBRzbjAxMjNFRTdBMTQzMjlEM0QwMTBZMBMGByqGSM49AgEG
-CCqGSM49AwEHA0IABNHmLcX7BUciDWCRoXyWM1UBd1/UeQWE93uvUa3Z3XHuoZis
+MDQ5MDMyNTExMDA------------------------jcm9jaGlwIFRlY2hub2xvZ3kg
+SW5jMR0wGwYDVQQ    THIS IS A SAMPLE    iOkQwMTBZMBMGByqGSM49AgEG
+CCqGSM49AwEHA0I------------------------Bd1/UeQWE93uvUa3Z3XHuoZis
 naG+sYdmoGhgkfhwjYKH7eATjrSKeFPfX9c/vlOjYDBeMAwGA1UdEwEB/wQCMAAw
 DgYDVR0PAQH/BAQDAgOIMB0GA1UdDgQWBBReZ3gqfZtIp+p4ZMn+FkIVTx5E6TAf
 BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
 AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
+
+Current provisioning data:
+...
 ```
 * Use the console at this point to provision your code with information found in your account:
+  * Platfrom: For IoTConnect on AWS enter ```aws```, or for Azure enter ```az``` 
   * CPID
   * Environment
 * You may choose to enter a blank Device Unique ID (DUID), and in that case the default 
-auto-generated ID, unique for each board will user. This ID will be printed on the screen.
+auto-generated ID, unique for each board will used. This ID will be printed on the screen
 * Note or save the device certificate displayed on the terminal (including the BEGIN and END lines) 
- and the **Device ID** value, and use it in the next steps.
+ and the **Device ID** value, and use it in the next steps
 
 ## IoTConnect Setup
 
 * Log into your IoTConnect account and create a new template using the IoTConnect Web user interface.
 use the Self-Signed authentication type with a property with name "version" of type STRING and property with name
-"random" and type NUMBER.
-* Create a new device with name displayed on the provisioning sketch output above:
-* Select your template created in the previous step.
-* Upload or paste or your device certificate and create the device.
+"random" of type NUMBER
+* Create a new device with name displayed on the provisioning sketch output above
+* Select your template created in the previous step
+* Upload or paste or your device certificate and create the device
 
 ## Running Demo Code with Arduino IDE
 
 * Open the Arduino IDE and load the avr-iot-sample example by navigating
-to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-sample from the menu.
-* Run the sketch by selecting the *Sketch->Upload Using Programmer* from the menu.
+to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-sample from the menu
+* Run the sketch by selecting the *Sketch->Upload Using Programmer* from the menu
 * On a successful run, you should see an output similar to this:
 
 ```
