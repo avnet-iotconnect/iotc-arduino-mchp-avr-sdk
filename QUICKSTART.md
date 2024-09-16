@@ -39,19 +39,13 @@ An IoTConnect account is required to continue this guide. If you need to create 
 
 ```
 [INFO] Starting the provisioning sample...
-[INFO] Setting up MQTT profile #1 and ciphersuites...
-[INFO] MQTT profile and ciphersuite config written successfully.
-[INFO] Setting up HTTP profile #3..
-[INFO] HTTP profile was set up successfully.
-[INFO] HTTPS CA certificate updated successfuly.
-[INFO] MQTT CA certificate updated successfuly.
 -----BEGIN CERTIFICATE-----
 MIIB8DCCAZegAwIBAgIQZqxXFSHF/eOiwnn/0rSQLzAKBggqhkjOPQQDAjBPMSEw
 HwYDVQQKDBhNaWNyb2NoaXAgVGVjaG5vbG9neSBJbmMxKjAoBgNVBAMMIUNyeXB0
 byBBdXRoZW50aWNhdGlvbiBTaWduZXIgMkQzMDAgFw0yMTAzMjUxMTAwMDBaGA8y
-MDQ5MDMyNTExMDAwMFowQjEhMB8GA1UECgwYTWljcm9jaGlwIFRlY2hub2xvZ3kg
-SW5jMR0wGwYDVQQDDBRzbjAxMjNFRTdBMTQzMjlEM0QwMTBZMBMGByqGSM49AgEG
-CCqGSM49AwEHA0IABNHmLcX7BUciDWCRoXyWM1UBd1/UeQWE93uvUa3Z3XHuoZis
+MDQ5MDMyNTExMDA------------------------jcm9jaGlwIFRlY2hub2xvZ3kg
+SW5jMR0wGwYDVQQ    THIS IS A SAMPLE    iOkQwMTBZMBMGByqGSM49AgEG
+CCqGSM49AwEHA0I------------------------Bd1/UeQWE93uvUa3Z3XHuoZis
 naG+sYdmoGhgkfhwjYKH7eATjrSKeFPfX9c/vlOjYDBeMAwGA1UdEwEB/wQCMAAw
 DgYDVR0PAQH/BAQDAgOIMB0GA1UdDgQWBBReZ3gqfZtIp+p4ZMn+FkIVTx5E6TAf
 BgNVHSMEGDAWgBQss+/LXwRk0qR/1plYzq+aUB2NqTAKBggqhkjOPQQDAgNHADBE
@@ -59,16 +53,22 @@ AiByL9Qrcr9VC94fKPws5bIFd8a9YKFzp4ZPVuUJML863QIgFmCDPBO9zxRiJdLw
 2qgjeuEeDVW6r0SVw4wpJSELhOY=
 -----END CERTIFICATE-----
 
+Current provisioning data:
+...
 ```
-* Use the console to set the values for **CPID** and **ENV** which were obtained from the IoTConnect Web GUI in a previous step.
-* The DUID value should be left unset. A DUID unique to your device will be generated and displayed on the console during startup.
+* Use the console at this point to provision your code with information found in your account:
+  * Platfrom: For IoTConnect on AWS enter ```aws```, or for Azure enter ```az``` 
+  * CPID
+  * Environment
+* You may choose to enter a blank Device Unique ID (DUID), and in that case the default 
+auto-generated ID, unique for each board will used. This ID will be printed on the screen
 * Note or save the device certificate displayed on the terminal (including the BEGIN and END lines) 
- and the **Device ID** value, and use it in the next steps.
+ and the **Device ID** value, and use it in the next steps
 
 ## IoTConnect Setup
 
 * Log into your IoTConnect account and create a new template using the IoTConnect Web user interface.
-use the Self-Signed authentication type with a property with name "version" of type STRING and property with name
+Use protocol version 2.1 and Self-Signed X509 authentication type with a property with name "version" of type STRING and property with name
 "random" and type NUMBER.
 * Create a new device with name displayed on the provisioning sketch output above:
 * Select your template created in the previous step.
@@ -80,7 +80,7 @@ use the Self-Signed authentication type with a property with name "version" of t
 * On a successful run, you should see an output similar to this:
 
 ```
-[INFO] Starting the Sample Application 02.00.00
+[INFO] Starting the Sample Application 03.00.00
 [INFO] CPID: [your CPID]
 [INFO] Env : [your Env]
 [INFO] DUID: avr-092ee282bb58cf55f34c66e3d3c

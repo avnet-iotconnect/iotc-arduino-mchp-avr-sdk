@@ -1,6 +1,7 @@
-// Copyright: Avnet, Softweb Inc. 2023
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 3/17/23.
-//
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2024 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
 
-#define APP_VERSION "02.00.00"
+#define APP_VERSION "03.00.00"
 
 #define GENERATED_ID_PREFIX "sn"
 
@@ -52,12 +53,16 @@ static void on_connection_status(IotConnectConnectionStatus status) {
 
 static void command_status(const char* ack_id, bool command_success, const char *command_name, const char *message) {
     Log.infof(F("command: %s status=%s: %s\n"), command_name, command_success ? "OK" : "Failed", message);
-
-    iotcl_mqtt_send_cmd_ack(
-      ack_id,
-      command_success ? IOTCL_C2D_EVT_CMD_SUCCESS_WITH_ACK : IOTCL_C2D_EVT_CMD_FAILED,
-      message // allowed to be null, but should not be null if failed, we'd hope
-    );
+    if (ack_id) {
+      delay(1000);
+      iotcl_mqtt_send_cmd_ack(
+        ack_id,
+        command_success ? IOTCL_C2D_EVT_CMD_SUCCESS_WITH_ACK : IOTCL_C2D_EVT_CMD_FAILED,
+        message // allowed to be null, but should not be null if failed, we'd hope
+      );
+      delay(1000);
+      Log.info("Message sent");
+    }
 }
 
 static void on_command(IotclC2dEventData data) {
@@ -79,7 +84,7 @@ static void on_command(IotclC2dEventData data) {
             }
             command_status(ack_id, true, command, "OK");
         } else {
-            Log.errorf(F("Unknown command:%s\n"), command);
+            Log.errorf(F("Unknown command:%s\r\n"), command);
             command_status(ack_id, false, command, "Not implemented");
         }
         free((void *) command);
@@ -155,13 +160,13 @@ void memory_test() {
     int i = 0;
     for (; i < TEST_BLOCK_COUNT; i++) {
         void *ptr = malloc(TEST_BLOCK_SIZE);
-        Log.infof(F("0x%x\n"), (unsigned long) ptr);
+        Log.infof(F("0x%x\r\n"), (unsigned long) ptr);
         blocks[i] = ptr;
         if (!ptr) {
             break;
         }
     }
-    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\n"), i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
+    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\r\n"), i, TEST_BLOCK_SIZE, TEST_BLOCK_COUNT);
     for (int j = 0; j < i; j++) {
         free(blocks[j]);
     }
@@ -181,7 +186,7 @@ void reserve_stack_with_heap_leak() {
             break;
         }
     }
-    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\n"), i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
+    Log.infof(F("====Allocated %d blocks of size %d (of max %d)===\r\n"), i, RESERVE_BLOCK_SIZE, RESERVE_BLOCK_COUNT);
     for (int j = 0; j < (i - RESERVE_LEAK_COUNT); j++) {
         free(blocks[j]);
     }
@@ -190,10 +195,10 @@ void reserve_stack_with_heap_leak() {
 void demo_setup(void)
 {
   Log.begin(115200);
-  Log.setLogLevel(LogLevel::DEBUG);
+  Log.setLogLevel(LogLevel::INFO);
   delay(2000);
 
-  Log.infof(F("Starting the Sample Application %s\n"), APP_VERSION);
+  Log.infof(F("Starting the Sample Application %s\r\n"), APP_VERSION);
 
   LedCtrl.begin();
   LedCtrl.startupCycle();
@@ -234,10 +239,10 @@ void demo_setup(void)
     config.duid = duid_from_serial_buf;
   }
 
-  Log.infof(F("Platform: %s\n"), config.connection_type == IOTC_CT_AWS ? "AWS" : "Azure");
-  Log.infof(F("CPID: %s\n"), config.cpid);
-  Log.infof(F("ENV : %s\n"), config.env);
-  Log.infof(F("DUID: %s\n"), config.duid);
+  Log.infof(F("Platform: %s\r\n"), config.connection_type == IOTC_CT_AWS ? "AWS" : "Azure");
+  Log.infof(F("CPID: %s\r\n"), config.cpid);
+  Log.infof(F("ENV : %s\r\n"), config.env);
+  Log.infof(F("DUID: %s\r\n"), config.duid);
 
   if (!connect_lte()) {
       return;

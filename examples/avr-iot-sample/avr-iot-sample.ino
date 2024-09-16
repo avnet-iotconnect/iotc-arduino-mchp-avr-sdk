@@ -1,3 +1,8 @@
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2020 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
+
 #include <string.h>
 #include <stdlib.h>
 #include "log.h"
@@ -13,8 +18,8 @@ void setup() {
   size_t s = r == 1 ? 499 : 500;
   char dummy_stack_buffer[500];
   memset(dummy_stack_buffer, 'A', sizeof(dummy_stack_buffer));
-  Log.infof("Dummy stack check %c\n", dummy_stack_buffer[1]);
-  Log.infof("Dummy stack check %c\n", dummy_stack_buffer[399]);
+  Log.infof("Dummy stack check %c\r\n", dummy_stack_buffer[1]);
+  Log.infof("Dummy stack check %c\r\n", dummy_stack_buffer[399]);
   }
 #endif
   demo_setup();

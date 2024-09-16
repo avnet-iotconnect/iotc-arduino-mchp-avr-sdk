@@ -40,6 +40,11 @@ void iotc_mqtt_client_loop() {
             return;
         }
     }
+
+#if 0
+    // Receiving messages seems to be the main loop into a stuck state.
+    // We need to investigate this further...
+    // Known issue for now.
     IotclMqttConfig* mc = iotcl_mqtt_get_config();
     if (!mc) {
         Log.error(F("iotc_mqtt_client_loop(): Error: iotcl not configured?!"));
@@ -56,6 +61,7 @@ void iotc_mqtt_client_loop() {
             c->c2d_msg_cb(c_str);
         }
     }
+#endif
 }
 
 static void on_mqtt_disconnected(void) {
@@ -93,6 +99,23 @@ bool iotc_mqtt_client_connect(void) {
     Log.errorf(F("Failed to connect to MQTT after %d retries\n"), IOTC_MAX_MQTT_CONN_RETRIES);
     return false;
 }
+
+static void iotc_mqtt_client_on_receive(
+    const char* topic,
+    const uint16_t message_length,
+    const int32_t message_id) {
+        char buff[10];
+        // don't want to printf (fromatted) in ISR
+        Log.info("Received on topic: ");
+        Log.raw(topic);
+        Log.info("Len: ");
+        itoa(message_length, buff, 10);
+        Log.raw(buff);
+        Log.info("ID: ");
+        itoa(message_id, buff, 10);
+        Log.raw(buff);
+}
+
 
 bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
     disconnect_received = false;
@@ -158,6 +181,9 @@ bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
         Log.rawf(F("_"));
         delay(500);
     }
+
+    MqttClient.onReceive(iotc_mqtt_client_on_receive);
+
 
     if(!MqttClient.subscribe(mc->sub_c2d, AT_LEAST_ONCE)) {
         Log.errorf(F("ERROR: Unable to subscribe for C2D messages topic %s!\n"), mc->sub_c2d);

@@ -164,7 +164,7 @@ bool iotconnect_sdk_is_connected(void) {
 
 
 void iotconnect_sdk_loop(void) {
-    return iotc_mqtt_client_loop();
+    iotc_mqtt_client_loop();
 }
 
 #ifdef AWS_QUALIFICATION
@@ -172,12 +172,10 @@ void iotc_qualification_start(const char* host) {
     IotclMqttConfig *mc = iotcl_mqtt_get_config();
     iotcl_free(mc->pub_rpt);
     iotcl_free(mc->sub_c2d);
+    iotcl_free(mc->host);
     mc->pub_rpt = iotcl_strdup("qualification");
     mc->sub_c2d = iotcl_strdup("qualification");
-    // mc->host = iotcl_strdup("a2tz930267bcnl-ats.iot.eu-west-1.amazonaws.com");
-    mc->host = iotcl_strdup("t2wlntge8x69qa.deviceadvisor.iot.eu-west-1.amazonaws.com");
-
-    // iotconnect_sdk_disconnect();
+    mc->host = iotcl_strdup(host);
 
     unsigned long last_connected = millis();
     while(true) {
@@ -189,12 +187,12 @@ void iotc_qualification_start(const char* host) {
             }
             last_connected = millis();
         }
-#if 0
+
         IotclMessageHandle msg = iotcl_telemetry_create();
     	iotcl_telemetry_set_string(msg, "qualification", "true");
     	iotcl_mqtt_send_telemetry(msg, false);
         iotcl_telemetry_destroy(msg);
-#endif
+
         delay(10000);
         iotconnect_sdk_loop();
         if (millis() - last_connected > 60000) {
@@ -247,7 +245,7 @@ bool iotconnect_sdk_init(IotConnectClientConfig *c) {
     mqtt_config.c2d_msg_cb = on_mqtt_message;
 
 #ifdef AWS_QUALIFICATION
-    iotc_qualification_start("t2wlntge8x69qa.deviceadvisor.iot.eu-west-1.amazonaws.com");
+    iotc_qualification_start("your-example-host.deviceadvisor.iot.eu-west-1.amazonaws.com");
     // should never this line if AWS_QUALIFICATION
     return true;
 #endif

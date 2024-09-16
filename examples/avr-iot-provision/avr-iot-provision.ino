@@ -1,4 +1,8 @@
-// Hello
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2024 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
+
 #include <Arduino.h>
 #include "log.h"
 #include "cryptoauthlib/app/tng/tng_atcacert_client.h"
@@ -180,7 +184,7 @@ static bool provision_from_user_input(IotConnectClientConfig *config) {
 
 void setup() {
   Log.begin(115200);
-  Log.setLogLevel(LogLevel::DEBUG);
+  Log.setLogLevel(LogLevel::INFO);
 
   Log.info("Starting the provisioning sample...");
 

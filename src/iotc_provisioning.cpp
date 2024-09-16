@@ -38,7 +38,7 @@
 
 #define HTTP_CUSTOM_CA_SLOT   (15)
 #define MQTT_CUSTOM_CA_SLOT   (16)
-#define MQTT_PUBLIC_KEY_SLOT  (0)
+#define MQTT_CLIENT_CERT_SLOT (18)
 #define MQTT_PRIVATE_KEY_SLOT (0)
 
 // NOTE the special modem-compatible format for certificates
@@ -167,7 +167,7 @@ static bool write_ciphersuite_config(void) {
     CIPHER49,
     1, // always validate
     ca_index,
-    MQTT_PUBLIC_KEY_SLOT,
+    MQTT_CLIENT_CERT_SLOT,
     MQTT_PRIVATE_KEY_SLOT,
     psk,
     psk_identity
