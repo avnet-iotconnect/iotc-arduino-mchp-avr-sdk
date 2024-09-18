@@ -67,7 +67,7 @@ a set of patches that would need to be applied.
 
 ## Development Build
 
-* Refer to the the [Quickstart Guide](QUICKSTART.md) for the next steps, 
+* Refer to to the [Quickstart Guide](QUICKSTART.md) for the next steps, 
  where instead of using pre-compiled binaries, we will be build the corresponding firmware using the IDE with the following steps:
   * Open the Arduino IDE and then build the avr-iot-provision example by navigating
   to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu. 
@@ -76,15 +76,24 @@ a set of patches that would need to be applied.
     to File->Examples->iotconnect-mchp-avr-sdk->avr-iot-provision from the menu.
   * Upload the sketch by using *Sketch->Upload Using Programmer*.
 
-## Modem Firmware Upgrade
+## (Optional) Modem Firmware Upgrade
+
+The firmware upgrade has been tested from LR8.0.5.10 to LR8.2.1.0.
 
 If you wish to upgrade the modem firmware, Follow the steps at the 
-[AVR-IoT Cellular Mini UserGuide's Sequans Modem section] https://github.com/microchip-pic-avr-tools/iotprovision-bin/releases
-**carefully**. The board hat we purchased came with 
+[AVR-IoT Cellular Mini UserGuide's Sequans Modem section](https://iot.microchip.com/docs/arduino/userguide/sequans_modem)
+**carefully**. When purchased, the board will likely come with the older LR8.0.5.10-55042 firmware that supports LTE CAT-M only.
+The upgraded firmware will support both CAT-M and NB-IoT, though the software in this repo will only support CAT-M.
+
+Once done, ensure to download and run the [iotprovision tool](https://github.com/microchip-pic-avr-tools/iotprovision-bin/releases)
+from Microchip and run it with ```iotprovision -v debug -c aws``` (even for Azure) 
+
+If you have previously configured the board with avr-iot-provision, you must run the sketch again, as the board will lose
+the provisioning information.
 
 
 ## Known Issues
-
-The current version of the SDK receiving devicebound command/OTA messages and sending acknowledgements causes a modem to hang. 
+* The current version of the SDK receiving devicebound command/OTA messages and sending acknowledgements causes a modem to hang. 
 The SDK can only send telemetry messages at this time.
+* The SDK avr-iot-provision Sketch supports only LTE CAT-M.
 
