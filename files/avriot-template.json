@@ -1,0 +1,87 @@
+{
+    "code": "avriot",
+    "name": "avriot",
+    "authType": 2,
+    "attributes": [
+        {
+            "name": "version",
+            "type": "STRING",
+            "description": "Reported software version",
+            "unit": null
+        },
+        {
+            "name": "random",
+            "type": "INTEGER",
+            "description": "A random reported number",
+            "unit": null
+        },
+        {
+            "name": "temperature",
+            "type": "DECIMAL",
+            "description": "Temperature reported by the temperature sensor in Celsius",
+            "unit": "Celsuis"
+        },
+        {
+            "name": "light",
+            "type": "OBJECT",
+            "description": "Light sensor reading (R,G,B, Infrared)",
+            "childs": [
+                {
+                    "name": "r",
+                    "type": "INTEGER",
+                    "description": "Red light sensor intensity",
+                    "unit": null,
+                    "attributeColor": null
+                },
+                {
+                    "name": "b",
+                    "type": "INTEGER",
+                    "description": "Blue light sensor intensity",
+                    "unit": null,
+                    "attributeColor": null
+                },
+                {
+                    "name": "g",
+                    "type": "INTEGER",
+                    "description": "Green light sensor intensity",
+                    "unit": null,
+                    "attributeColor": null
+                }
+            ]
+        },
+        {
+            "name": "button_counter",
+            "type": "INTEGER",
+            "description": "A counter that represents the number of times the user button is pressed since board reboot",
+            "unit": null
+        }
+    ],
+    "commands": [
+        {
+            "name": "led-user",
+            "command": "led-user",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        },
+        {
+            "name": "led-error",
+            "command": "led-error",
+            "requiredParam": true,
+            "requiredAck": true,
+            "isOTACommand": false
+        }
+    ],
+    "messageVersion": "2.1",
+    "msgCode": "XG4EPK6",
+    "greenGrass": "0",
+    "wireless": "0",
+    "properties": {
+        "description": null,
+        "dataFrequency": "5",
+        "fileSupport": false
+    },
+    "_meta": {
+        "version": "2.0"
+    }
+}

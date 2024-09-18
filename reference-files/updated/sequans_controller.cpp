@@ -931,11 +931,14 @@ SequansControllerClass::readResponse(char* out_buffer,
         // consideration and look for the last 2 elements after the variable
         // is incremented
         if (buffer[i - 2] == CARRIAGE_RETURN && buffer[i - 1] == LINE_FEED) {
-            Log.rawf("Buffer:>>");
-            for (size_t j = 0; j < i; j++) {
-                printChar(buffer[j], false);
+            if (Log.getLogLevel() == LogLevel::DEBUG) {
+                Log.rawf("Buffer:>>");
+                for (size_t j = 0; j < i; j++) {
+                    printChar(buffer[j], false);
+                }
+                Log.rawf("<<\n");
             }
-            Log.rawf("<<\n");
+
             char* ok_index = strstr_P(buffer, PSTR("\r\nOK\r\n"));
 
             if (ok_index != NULL) {

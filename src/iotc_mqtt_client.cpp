@@ -20,6 +20,35 @@
 static bool disconnect_received = false;
 static IotConnectMqttClientConfig* c = NULL;
 
+
+// NOTE: Will run in ISR. Not in real use temporarily.
+// TODO: Handle this and implement offloading the message from the ISR
+static void iotc_mqtt_client_on_receive(
+    const char* topic,
+    const uint16_t message_length,
+    const int32_t message_id) {
+        if (Log.getLogLevel() == LogLevel::DEBUG) {
+            char buff[10];
+            // don't want to printf (fromatted) in ISR
+            Log.infof("Message received on topic: ");
+            Log.rawf(topic);
+            Log.infof("Len: ");
+            itoa(message_length, buff, 10);
+            Log.rawf(buff);
+            Log.rawf("ID: ");
+            itoa(message_id, buff, 10);
+            Log.raw(buff);
+            Log.raw()
+        }
+}
+
+static void on_mqtt_disconnected(void) {
+    disconnect_received = true;
+    if (c->status_cb) {
+        c->status_cb(IOTC_CS_MQTT_DISCONNECTED);
+    }
+}
+
 void iotc_mqtt_client_disconnect(void) {
     Log.info(F("Closing the MQTT connection"));
     MqttClient.end();
@@ -64,13 +93,6 @@ void iotc_mqtt_client_loop() {
 #endif
 }
 
-static void on_mqtt_disconnected(void) {
-    disconnect_received = true;
-    if (c->status_cb) {
-        c->status_cb(IOTC_CS_MQTT_DISCONNECTED);
-    }
-}
-
 bool iotc_mqtt_client_connect(void) {
     IotclMqttConfig* mc = iotcl_mqtt_get_config();
     for (int i = 0; i < IOTC_MAX_MQTT_CONN_RETRIES; i++) {
@@ -99,23 +121,6 @@ bool iotc_mqtt_client_connect(void) {
     Log.errorf(F("Failed to connect to MQTT after %d retries\n"), IOTC_MAX_MQTT_CONN_RETRIES);
     return false;
 }
-
-static void iotc_mqtt_client_on_receive(
-    const char* topic,
-    const uint16_t message_length,
-    const int32_t message_id) {
-        char buff[10];
-        // don't want to printf (fromatted) in ISR
-        Log.info("Received on topic: ");
-        Log.raw(topic);
-        Log.info("Len: ");
-        itoa(message_length, buff, 10);
-        Log.raw(buff);
-        Log.info("ID: ");
-        itoa(message_id, buff, 10);
-        Log.raw(buff);
-}
-
 
 bool iotc_mqtt_client_init(IotConnectMqttClientConfig *config) {
     disconnect_received = false;
