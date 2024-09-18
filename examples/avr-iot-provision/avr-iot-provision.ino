@@ -1,10 +1,14 @@
-// Hello
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2024 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
+
 #include <Arduino.h>
 #include "log.h"
 #include "cryptoauthlib/app/tng/tng_atcacert_client.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
-#include "IoTConnectSDK.h"
+#include "iotconnect.h"
 
 // for user input we are using raw serial
 #define SerialModule Serial3
@@ -63,7 +67,7 @@ static bool read_until_newline(char* output_buffer, const size_t output_buffer_l
         SerialModule.print((char)input);
         // - 1 here since we need space for null termination
         if (index >= output_buffer_length - 1) {
-            Log.errorf("Reached maximum input length of %lu", output_buffer_length);
+            Log.errorf("Reached maximum input length of %d", (int) output_buffer_length);
             return false;
         }
         output_buffer[index++] = input;
@@ -86,7 +90,7 @@ static bool validate_user_input(const char* value, bool required, bool dash_allo
     char ch = value[i];
     bool valid = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9') || (dash_allowed && ch == '-');
     if (!valid) {
-      Log.infof("Invalid character '%c' with ASCII code 0x%x encountered in input.\r\n", ch, ch);
+      Log.infof("Invalid character '%c' with ASCII code 0x%x encountered in input.\n", ch, ch);
       Log.info("Please check your input try again...");
       return false;
     }
@@ -96,59 +100,79 @@ static bool validate_user_input(const char* value, bool required, bool dash_allo
 
 static void print_string_or_default(const char* item, const char* value, const char* default_value) {
   if (!value || 0 == strlen(value)) {
-    SerialModule.printf("%s: (%s)\r\n", item, default_value);
+    Log.rawf(F("%s: %s\n"), item, default_value);
   } else {
-    SerialModule.printf("%s: %s\r\n", item, value);
+    Log.rawf(F("%s: %s\n"), item, value);
   }
 }
 
 static bool provision_from_user_input(IotConnectClientConfig *config) {
+  const char* const PLATFORM_AWS = "aws";
+  const char* const PLATFORM_AZ = "az";
+  IotConnectConnectionType platform;
+
+  char platform_buff[5]; // aws or az
   char cpid_buff[IOTC_ECC608_PROV_CPID_SIZE];
   char env_buff[IOTC_ECC608_PROV_ENV_SIZE];
   char duid_buff[IOTC_ECC608_PROV_DUID_SIZE];
 
-  SerialModule.printf(" Please enter your IoTConnect device configuration.\r\n");
+  Log.raw(F(" Please enter your IoTConnect device configuration."));
+  Log.rawf(F(" If DUID is empty, the following deivce ID will be used: %s\n"), duid_from_serial_buf);
 
-  SerialModule.printf(" If DUID is empty, the following deivce ID will be :\r\n");
-  SerialModule.printf(" %s\r\n", duid_from_serial_buf);
 
   do {
-    SerialModule.print("\r\nCPID: ");
+    Log.rawf(F("\nPlatform AWS or Azure (\"aws\" or \"az\"): "));
+
+  } while(!read_until_newline(platform_buff, 4)
+    || ((0 != strcmp(platform_buff, PLATFORM_AWS)) && (0 != strcmp(platform_buff, PLATFORM_AZ)))
+  );
+
+  if (0 == strcmp(platform_buff, PLATFORM_AWS)) {
+    platform = IOTC_CT_AWS;
+  } else {
+    platform = IOTC_CT_AZURE;
+  }
+
+  do {
+    Log.rawf(F("\nCPID: "));
   } while(!read_until_newline(cpid_buff, IOTC_ECC608_PROV_CPID_SIZE - 1)
     || !validate_user_input(cpid_buff, true, false));
   do {
-    SerialModule.print("\r\nEnvironemnt: ");
+    Log.rawf(F("\nEnvironemnt: "));
       ; // do forever
   } while(!read_until_newline(env_buff, IOTC_ECC608_PROV_ENV_SIZE - 1)
     || !validate_user_input(env_buff, true, false));
 
   do {
-    SerialModule.print("\r\nDUID: ");
+    Log.rawf(F("\nDUID: "));
   } while(!read_until_newline(duid_buff, IOTC_ECC608_PROV_DUID_SIZE - 1)
     || !validate_user_input(duid_buff, false, true));
 
-  SerialModule.printf("\r\n--------------------"); //needs a new line at beginning
+  Log.rawf(F("\n--------------------\n")); //needs a new line at beginning and
   if(ATCA_SUCCESS != iotc_ecc608_set_string_value(IOTC_ECC608_PROV_CPID, cpid_buff)) {
     Log.error("Error while storing the CPID value.");
     return false; // called function will also print a relevant error
   }
 
+  if(ATCA_SUCCESS != iotc_ecc608_set_platform(platform)) {
+    Log.error("Error while storing the Environment value.");
+    return false; // called function will also print a relevant error
+  }
   if(ATCA_SUCCESS != iotc_ecc608_set_string_value(IOTC_ECC608_PROV_ENV, env_buff)) {
     Log.error("Error while storing the Environment value.");
     return false; // called function will also print a relevant error
   }
-
   if(ATCA_SUCCESS != iotc_ecc608_set_string_value(IOTC_ECC608_PROV_DUID, duid_buff)) {
     Log.error("Error while storing the DUID value.");
     return false; // called function will also print a relevant error
   }
-
   if(ATCA_SUCCESS != iotc_ecc608_write_all_data()) {
     return false; // called function will print a relevant error
   }
 
   // iotc_ecc608 module will keep the pointers around for us
-  if(ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_CPID, &(config->cpid))
+  if(ATCA_SUCCESS != iotc_ecc608_get_platform(&(config->connection_type))
+    || ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_CPID, &(config->cpid))
     || ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_ENV, &(config->env))
     || ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_DUID, &(config->duid))
   ) {
@@ -160,17 +184,14 @@ static bool provision_from_user_input(IotConnectClientConfig *config) {
 
 void setup() {
   Log.begin(115200);
+  Log.setLogLevel(LogLevel::INFO);
+
   Log.info("Starting the provisioning sample...");
 
   iotc_prov_init();
 
   if (ATCA_SUCCESS != iotc_ecc608_init_provision()) {
     return; // caller will print the error
-  }
-
-  if (!iotc_prov_setup_tls_and_server_certs()) {
-    Log.error("TLS provisioning failed");
-    return; // called function will print errors
   }
 
   iotc_prov_print_device_certificate();
@@ -180,22 +201,29 @@ void setup() {
     return; // caller will print the error
   }
 
-  IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
-  if (!load_provisioned_data(config)) {
+  IotConnectClientConfig config = {0};
+  if (!load_provisioned_data(&config)) {
       Log.info("Invalid provisioning data. Please provide the device IoTConnect configuraton.");
   }
 
-  SerialModule.printf("\r\nCurrent provisioning data:\r\n");
-  print_string_or_default("CPID\t\t", config->cpid, "[EMPTY]");
-  print_string_or_default("Environment\t", config->env, "[EMPTY]");
-  print_string_or_default("Device Uinque ID", config->duid, duid_from_serial_buf);
+  Log.rawf(F("\nCurrent provisioning data:\n"));
+  Log.rawf(F("Platform\t: %s\n"), config.connection_type == IOTC_CT_AZURE ? "Azure" : "AWS");
+  print_string_or_default("CPID\t\t", config.cpid, "[EMPTY]");
+  print_string_or_default("Environment\t", config.env, "[EMPTY]");
+  print_string_or_default("Device Uinque ID", config.duid, duid_from_serial_buf);
 
-  while (!provision_from_user_input(config)) {};
+  while (!provision_from_user_input(&config)) {};
 
-  SerialModule.printf("New provisioning data:\r\n");
-  print_string_or_default("CPID", config->cpid, "[EMPTY]");
-  print_string_or_default("Environment", config->env, "[EMPTY]");
-  print_string_or_default("Device Uinque ID", config->duid, duid_from_serial_buf);
+  if (!iotc_prov_setup_tls_and_server_certs(config.connection_type)) {
+    Log.error("TLS provisioning failed");
+    return; // called function will print errors
+  }
+
+  Log.raw(F("New provisioning data:"));
+  Log.rawf(F("Platform: %s\n"), config.connection_type == IOTC_CT_AZURE ? "Azure" : "AWS");
+  print_string_or_default("CPID", config.cpid, "[EMPTY]");
+  print_string_or_default("Environment", config.env, "[EMPTY]");
+  print_string_or_default("Device Uinque ID", config.duid, duid_from_serial_buf);
 
   Log.info("========= Provisioning Complete =========");
 }

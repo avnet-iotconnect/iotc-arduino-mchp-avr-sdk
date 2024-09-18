@@ -1,6 +1,7 @@
-// Copyright: Avnet, Softweb Inc. 2023
-// Created by Nik Markovic <nikola.markovic@avnet.com> on 3/17/23.
-//
+/* SPDX-License-Identifier: MIT
+ * Copyright (C) 2024 Avnet
+ * Authors: Nikola Markovic <nikola.markovic@avnet.com> et al.
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,11 +13,11 @@
 #include "mqtt_client.h"
 #include "led_ctrl.h"
 #include "veml3328.h"
-#include "IoTConnectSDK.h"
+#include "iotconnect.h"
 #include "iotc_ecc608.h"
 #include "iotc_provisioning.h"
 
-#define APP_VERSION "01.02.00"
+#define APP_VERSION "03.00.00"
 
 #define GENERATED_ID_PREFIX "sn"
 
@@ -50,16 +51,23 @@ static void on_connection_status(IotConnectConnectionStatus status) {
     }
 }
 
-static void command_status(IotclEventData data, bool status, const char *command_name, const char *message) {
-    const char *ack = iotcl_create_ack_string_and_destroy_event(data, status, message);
-    Log.infof(F("command: %s status=%s: %s\n"), command_name, status ? "OK" : "Failed", message);
-    Log.infof(F("Sent CMD ack: %s\n"), ack);
-    iotconnect_sdk_send_packet(ack);
-    free((void *) ack);
+static void command_status(const char* ack_id, bool command_success, const char *command_name, const char *message) {
+    Log.infof(F("command: %s status=%s: %s\n"), command_name, command_success ? "OK" : "Failed", message);
+    if (ack_id) {
+      delay(1000);
+      iotcl_mqtt_send_cmd_ack(
+        ack_id,
+        command_success ? IOTCL_C2D_EVT_CMD_SUCCESS_WITH_ACK : IOTCL_C2D_EVT_CMD_FAILED,
+        message // allowed to be null, but should not be null if failed, we'd hope
+      );
+      delay(1000);
+      Log.info("Message sent");
+    }
 }
 
-static void on_command(IotclEventData data) {
-    char *command = iotcl_clone_command(data);
+static void on_command(IotclC2dEventData data) {
+    const char *command = iotcl_c2d_get_command(data);
+    const char *ack_id = iotcl_c2d_get_ack_id(data);
     if (NULL != command) {
         if(NULL != strstr(command, "led-user") ) {
             if (NULL != strstr(command, "on")) {
@@ -67,76 +75,31 @@ static void on_command(IotclEventData data) {
             } else {
               LedCtrl.off(Led::USER);
             }
-            command_status(data, true, command, "OK");
+            command_status(ack_id, true, command, "OK");
         } else if(NULL != strstr(command, "led-error") ) {
             if (NULL != strstr(command, "on")) {
               LedCtrl.on(Led::ERROR);
             } else {
               LedCtrl.off(Led::ERROR);
             }
-            command_status(data, true, command, "OK");
+            command_status(ack_id, true, command, "OK");
         } else {
             Log.errorf(F("Unknown command:%s\r\n"), command);
-            command_status(data, false, command, "Not implemented");
+            command_status(ack_id, false, command, "Not implemented");
         }
         free((void *) command);
     } else {
-        command_status(data, false, "?", "Internal error");
+        command_status(ack_id, false, "?", "Internal error");
     }
 }
 
-static bool is_app_version_same_as_ota(const char *version) {
-    return strcmp(APP_VERSION, version) == 0;
-}
-
-static bool app_needs_ota_update(const char *version) {
-    return strcmp(APP_VERSION, version) < 0;
-}
-
-static void on_ota(IotclEventData data) {
-    const char *message = NULL;
-    char *url = iotcl_clone_download_url(data, 0);
-    bool success = false;
-    if (NULL != url) {
-        Log.infof(F("Download URL is: %s\n"), url);
-        const char *version = iotcl_clone_sw_version(data);
-        if (is_app_version_same_as_ota(version)) {
-            Log.infof(F("OTA request for same version %s. Sending success\n"), version);
-            success = true;
-            message = "Version is matching";
-        } else if (app_needs_ota_update(version)) {
-            Log.infof(F("OTA update is required for version %s.\n"), version);
-            success = false;
-            message = "Not implemented";
-        } else {
-            Log.infof(F("Device firmware version %s is newer than OTA version %s. Sending failure\n"), APP_VERSION,
-                   version);
-            // Not sure what to do here. The app version is better than OTA version.
-            // Probably a development version, so return failure?
-            // The user should decide here.
-            success = false;
-            message = "Device firmware version is newer";
-        }
-
-        free((void *) url);
-        free((void *) version);
-    } else {
-        // compatibility with older events
-        // This app does not support FOTA with older back ends, but the user can add the functionality
-        const char *command = iotcl_clone_command(data);
-        if (NULL != command) {
-            // URL will be inside the command
-            Log.infof(F("Command is: %s\n"), command);
-            message = "Old back end URLS are not supported by the app";
-            free((void *) command);
-        }
+static void on_ota(IotclC2dEventData data) {
+    const char *url = iotcl_c2d_get_ota_url(data, 0);
+    if (url == NULL) {
+      Log.error(F("OTA URL is missing?"));
+      return;
     }
-    const char *ack = iotcl_create_ack_string_and_destroy_event(data, success, message);
-    if (NULL != ack) {
-        Log.infof(F("Sent OTA ack: %s\n"), ack);
-        iotconnect_sdk_send_packet(ack);
-        free((void *) ack);
-    }
+    Log.infof(F("OTA download request received for https://%s, but it is not implemented.\n"), url);
 }
 
 static void publish_telemetry() {
@@ -144,7 +107,6 @@ static void publish_telemetry() {
 
     // Optional. The first time you create a data point, the current timestamp will be automatically added
     // TelemetryAddWith* calls are only required if sending multiple data points in one packet.
-    iotcl_telemetry_add_with_iso_time(msg, iotcl_iso_timestamp_now());
     iotcl_telemetry_set_string(msg, "version", APP_VERSION);
     iotcl_telemetry_set_number(msg, "random", rand() % 100);
     iotcl_telemetry_set_number(msg, "temperature", Mcp9808.readTempC());
@@ -154,11 +116,8 @@ static void publish_telemetry() {
     iotcl_telemetry_set_number(msg, "light.ir", Veml3328.getIR());
     iotcl_telemetry_set_number(msg, "button_counter", button_press_count);
 
-    const char *str = iotcl_create_serialized_string(msg, false);
+    iotcl_mqtt_send_telemetry(msg, false);
     iotcl_telemetry_destroy(msg);
-    Log.infof(F("Sending: %s\r\n"), str);
-    iotconnect_sdk_send_packet(str); // underlying code will report an error
-    iotcl_destroy_serialized(str);
 }
 
 static void on_lte_disconnect(void) {
@@ -185,6 +144,10 @@ static bool load_provisioned_data(IotConnectClientConfig *config) {
   if (ATCA_SUCCESS != iotc_ecc608_get_string_value(IOTC_ECC608_PROV_DUID, &(config->duid))) {
     return false; // caller will print the error
   }
+  if (ATCA_SUCCESS != iotc_ecc608_get_platform(&(config->connection_type))) {
+    return false; // caller will print the error
+  }
+
   return true;
 }
 
@@ -257,37 +220,41 @@ void demo_setup(void)
     return; // caller will print the error
   }
 
-  IotConnectClientConfig *config = iotconnect_sdk_init_and_get_config();
-  if (!load_provisioned_data(config)
-    || !config->cpid || 0 == strlen(config->cpid)
-    || !config->env || 0 == strlen(config->env)
+  IotConnectClientConfig config = {0};
+  if (!load_provisioned_data(&config)
+    || !config.cpid || 0 == strlen(config.cpid)
+    || !config.env || 0 == strlen(config.env)
+    || config.connection_type == IOTC_CT_UNDEFINED
   ) {
       Log.error("Invalid provisioning data. Please run the avr-iot-provision sketch.");
       return;
   }
 
-  if (!config->duid || 0 == strlen(config->duid)) {
+  if (!config.duid || 0 == strlen(config.duid)) {
     strcpy(duid_from_serial_buf, GENERATED_ID_PREFIX);
     if (ATCA_SUCCESS != iotc_ecc608_get_serial_as_string(&duid_from_serial_buf[strlen(GENERATED_ID_PREFIX)])) {
       return; // caller will print the error
     }
 
-    config->duid = duid_from_serial_buf;
+    config.duid = duid_from_serial_buf;
   }
-  Log.infof(F("CPID: %s\r\n"), config->cpid);
-  Log.infof(F("ENV : %s\r\n"), config->env);
-  Log.infof(F("DUID: %s\r\n"), config->duid);
+
+  Log.infof(F("Platform: %s\r\n"), config.connection_type == IOTC_CT_AWS ? "AWS" : "Azure");
+  Log.infof(F("CPID: %s\r\n"), config.cpid);
+  Log.infof(F("ENV : %s\r\n"), config.env);
+  Log.infof(F("DUID: %s\r\n"), config.duid);
 
   if (!connect_lte()) {
       return;
   }
   connected_to_network = true;
 
-  config->ota_cb = on_ota;
-  config->status_cb = on_connection_status;
-  config->cmd_cb = on_command;
+  config.ota_cb = on_ota;
+  config.status_cb = on_connection_status;
+  config.cmd_cb = on_command;
+  config.verbose = true;
 
-  if (iotconnect_sdk_init()) {
+  if (iotconnect_sdk_init(&config)) {
     Lte.onDisconnect(on_lte_disconnect);
 
     // MAIN TELEMETRY LOOP - X messages
