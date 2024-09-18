@@ -38,7 +38,6 @@ static void iotc_mqtt_client_on_receive(
             Log.rawf("ID: ");
             itoa(message_id, buff, 10);
             Log.raw(buff);
-            Log.raw()
         }
 }
 
