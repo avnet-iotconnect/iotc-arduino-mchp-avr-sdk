@@ -9,7 +9,7 @@ then you may be interested in trying out our [Quickstart Guide](QUICKSTART.md)
 ## Prerequisites
 This guide has been tested with the following environment:
 * PC with Windows 10/11
-* USB-A to USB-C data cable
+* USB-A to USB-C data cable (not shipped with the board)
 * A serial terminal application such as [Tera Term](https://sourceforge.net/projects/tera-term/) (Recommended) or a browser-based version such as [Google Chrome Labs Serial Terminal](https://googlechromelabs.github.io/serial-terminal/)
 
 ## About the Application
@@ -29,13 +29,12 @@ with temperature and light sensor reading and report the following telemetry val
 | light.ir       | Infrared sensor                                                     |
 | button_counter | The  number of times the user button is pressed since board reboot  |
 
-In the future implementation, the board will react to the following commands - see [Known Issues](#known-issues).
-The following table is provided as reference:
+The following commands are supported:
 
-| Command   | Arguments | Description                   |
-|-----------|-----------|-------------------------------|
-| user-led  | on/off    | Turns the User LED on or off  | 
-| error-lef | on/off    | Turns the Error LED on or off |
+| Command   | Arguments | Description                          |
+|-----------|-----------|--------------------------------------|
+| user-led  | on/off    | Turns the User (amber) LED on or off | 
+| error-lef | on/off    | Turns the Error (red) LED on or off  |
 
 ## Development Setup Instructions
 
@@ -92,8 +91,6 @@ If you have previously configured the board with avr-iot-provision, you must run
 the provisioning information.
 
 
-## Known Issues
-* The current version of the SDK receiving devicebound command/OTA messages and sending acknowledgements causes a modem to hang. 
-The SDK can only send telemetry messages at this time.
+## Known Issues and Limitations
 * The SDK avr-iot-provision Sketch supports only LTE CAT-M.
 

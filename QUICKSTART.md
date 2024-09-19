@@ -79,12 +79,12 @@ Current provisioning data:
 * **Copy** the Device Unique ID *(DUID)* from the terminal and save for later use.
 * Use the console at this point to provision your code with information found in your account:
   * Platfrom: For IoTConnect on AWS enter ```aws```, or for Azure enter ```az``` 
-  * CPID: Value noted in the previous step [Acquire IoTConnect Account Information](#acquire-iotconnect-account-information)
-  * CPID: Value noted in the previous step [Acquire IoTConnect Account Information](#acquire-iotconnect-account-information)
+  * CPID: Value noted in the previous step - [Acquire IoTConnect Account Information](#acquire-iotconnect-account-information)
+  * Evniroment: Value noted in the previous step - [Acquire IoTConnect Account Information](#acquire-iotconnect-account-information)
 * You may choose to enter a blank Device Unique ID (DUID), and in that case the default 
 auto-generated ID, unique for each board will used. This ID will be printed on the screen
-* Note or save the device certificate displayed on the terminal (including the BEGIN and END lines) 
- and the **Device ID** value, and use it in the next steps
+* Leave this terminal open. We will copy the device certificate displayed on the terminal (including the BEGIN and END lines) 
+ and the **Device ID** value, and use it in the next steps.
 
 ## IoTConnect Device Template Setup
 
@@ -107,11 +107,11 @@ An IoTConnect *Device Template* will need to be created or imported. This define
 <img src="https://github.com/avnet-iotconnect/avnet-iotc-mtb-xensiv-example/assets/40640041/82e70cb6-018b-4bf3-a92c-a7286b05d73f" width=200>
 
 
-* Enter the **DUID** saved from earlier in the *Unique ID* field
-* Enter a description of your choice in the *Display Name* to help identify your device
-* Select the template from the dropdown box that was just imported ("avriot")
-* Ensure "Use my certificate" is selected under *Device certificate*
-* Browse and Select the "cert.txt" file saved in the previous [Provisioning](#provisioning) step or simply paste the certificate
+* Enter the **DUID** saved from earlier in the *Unique ID* field.
+* Enter a description of your choice in the *Display Name* to help identify your device.
+* Select the template from the dropdown box that was just imported ("avriot").
+* Ensure "Use my certificate" is selected under *Device certificate*.
+* Paste the certificate displayed in the [Provisioning](#provisioning) step into the *Certificate Text* field.
 * Click **Save & View**
 
 ## Running Demo Code with Arduino IDE

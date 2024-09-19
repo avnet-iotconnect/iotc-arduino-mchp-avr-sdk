@@ -20,6 +20,15 @@
 static bool disconnect_received = false;
 static IotConnectMqttClientConfig* c = NULL;
 
+typedef struct {
+    bool has_message;
+    char topic[MQTT_TOPIC_MAX_LENGTH];
+    uint16_t message_length;
+    int32_t message_id;
+} IotcMqttLastC2dMessage;
+
+static IotcMqttLastC2dMessage last_c2d_message = {0};
+
 
 // NOTE: Will run in ISR. Not in real use temporarily.
 // TODO: Handle this and implement offloading the message from the ISR
@@ -30,15 +39,22 @@ static void iotc_mqtt_client_on_receive(
         if (Log.getLogLevel() == LogLevel::DEBUG) {
             char buff[10];
             // don't want to printf (fromatted) in ISR
-            Log.infof("Message received on topic: ");
+            Log.infof(F("Message received on topic: "));
             Log.rawf(topic);
-            Log.infof("Len: ");
+            Log.infof(F(" len:"));
             itoa(message_length, buff, 10);
             Log.rawf(buff);
-            Log.rawf("ID: ");
+            Log.rawf(F(" id:"));
             itoa(message_id, buff, 10);
             Log.raw(buff);
         }
+        if (last_c2d_message.has_message) {
+            Log.warn(F("Previous C2D message was not processed. Consider increasing the frequency of calls to iotconnect_sdk_loop() or reducing C2D messaging rate"));
+        }
+        strcpy(last_c2d_message.topic, topic);
+        last_c2d_message.message_id = message_id;
+        last_c2d_message.message_length = message_length;
+        last_c2d_message.has_message = true;
 }
 
 static void on_mqtt_disconnected(void) {
@@ -67,6 +83,24 @@ void iotc_mqtt_client_loop() {
             c->status_cb(IOTC_CS_MQTT_DISCONNECTED);
             return;
         }
+    }
+
+    if (last_c2d_message.has_message) {
+        last_c2d_message.has_message = false;
+        char data_buffer[last_c2d_message.message_length + 1] = {0};
+        if (0 == last_c2d_message.message_id) {
+            // BUG: if QOS is zero, the AVR IoT library returns 0 instead of -1.
+            // This causes the fetch with msg_id = 0 to fail.
+            last_c2d_message.message_id = -1;
+        }
+        MqttClient.readMessage(
+            last_c2d_message.topic,
+            data_buffer,
+            last_c2d_message.message_length + 1,
+            last_c2d_message.message_id
+        );
+        data_buffer[last_c2d_message.message_length] = '\0'; // terminate the string, just in case
+        c->c2d_msg_cb(data_buffer);
     }
 
 #if 0
