@@ -250,12 +250,6 @@ bool iotconnect_sdk_init(IotConnectClientConfig *c) {
     return true;
 #endif
 
-#if 0
-    IotclMqttConfig *mc = iotcl_mqtt_get_config();
-    iotcl_free(mc->host);
-    mc->host = iotcl_strdup("a2tz930267bcnl-ats.iot.eu-west-1.amazonaws.com");
-#endif
-
     if (!iotc_mqtt_client_init(&mqtt_config)) {
         Log.error(F("Failed to connect!"));
         return false;
