@@ -70,14 +70,14 @@ static void on_command(IotclC2dEventData data) {
     const char *ack_id = iotcl_c2d_get_ack_id(data);
     if (NULL != command) {
         if(NULL != strstr(command, "led-user") ) {
-            if (NULL != strstr(command, "on")) {
+            if (NULL != strstr(command, " on")) {
               LedCtrl.on(Led::USER);
             } else {
               LedCtrl.off(Led::USER);
             }
             command_status(ack_id, true, command, "OK");
         } else if(NULL != strstr(command, "led-error") ) {
-            if (NULL != strstr(command, "on")) {
+            if (NULL != strstr(command, " on")) {
               LedCtrl.on(Led::ERROR);
             } else {
               LedCtrl.off(Led::ERROR);
@@ -87,7 +87,6 @@ static void on_command(IotclC2dEventData data) {
             Log.errorf(F("Unknown command:%s\r\n"), command);
             command_status(ack_id, false, command, "Not implemented");
         }
-        free((void *) command);
     } else {
         command_status(ack_id, false, "?", "Internal error");
     }
