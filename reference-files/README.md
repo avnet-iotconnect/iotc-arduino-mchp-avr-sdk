@@ -1,0 +1,1 @@
+These files are posted as reference to capture WIP changes to the connection logic and modem firmware debugging.
